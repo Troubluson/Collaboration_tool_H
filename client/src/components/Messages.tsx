@@ -9,50 +9,59 @@ type Message = {
 
 export default function Messages() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [eventSource, setEventSource] = useState<EventSource | null>(null);
+  const [newMessage, setNewMessage] = useState<Message | null>(null);
 
   const updateMessages = (message: Message) => {
-    setMessages([...messages, message]);
+    // Temporarily save new incoming messages to separate state to avoid message list resetting
+    setNewMessage(message);
   };
 
-  function initEventSource() {
-    console.log('loaded');
+  useEffect(() => {
+    if (!newMessage) return;
+    setMessages([...messages, newMessage]);
+  }, [newMessage]);
+
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
     try {
-      if (eventSource) return;
-      const socket = new EventSource(`${serverBaseURL}/stream/`);
-      socket.onmessage = (e) => {
+      eventSource = new EventSource(`${serverBaseURL}/stream/`);
+      eventSource.onmessage = (e) => {
         updateMessages(JSON.parse(e.data));
       };
 
-      socket.onerror = () => {
-        socket?.close();
-        setEventSource(null);
-      };
-
-      setEventSource(socket);
-      return () => {
-        socket?.close();
-        setEventSource(null);
+      eventSource.onerror = () => {
+        eventSource?.close();
       };
     } catch (error) {
-      setEventSource(null);
+      eventSource?.close();
       console.error('error', 'An unexpected error has occured', error);
     }
-  }
-
-  useEffect(() => {
-    initEventSource();
+    return () => {
+      eventSource?.close();
+    };
   }, []);
 
   return (
-    <div style={{ display: 'grid', placeItems: 'center' }}>
+    <div
+      style={{
+        display: 'grid',
+        placeItems: 'center',
+      }}
+    >
       <h1>Messages</h1>
-      {messages.length &&
-        messages.map((e) => (
+      <div
+        style={{
+          height: '20vh',
+          overflowY: 'auto',
+          width: '80vw',
+        }}
+      >
+        {messages.map((e) => (
           <p key={e.id}>
             {e.id} {e.message}
           </p>
         ))}
+      </div>
     </div>
   );
 }
