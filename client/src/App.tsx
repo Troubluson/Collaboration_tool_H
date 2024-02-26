@@ -1,26 +1,29 @@
-import './App.css';
+import './index.css';
 
-import React from 'react';
+import { ConfigProvider, Layout, theme } from 'antd';
+import React, { useState } from 'react';
+import SideBar from './components/Sidebar/Sidebar';
+import Channel from './components/Channel/Channel';
+import { ChannelProvider } from './hooks/ChannelContext';
 
-import Messages from './components/Messages';
-import logo from './logo.svg';
+const { Header, Content, Footer, Sider } = Layout;
 
-function App() {
+const App = () => {
+  const {
+    token: { colorBgContainer },
+  } = theme.useToken();
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p className="header">
-          🚀 Vite + React + Typescript 🤘 & <br />
-          Eslint 🔥+ Prettier
-        </p>
-
-        <div className="body">
-          <Messages />
-        </div>
-      </header>
-    </div>
+    <Layout hasSider>
+      <ChannelProvider>
+        <SideBar />
+        <Layout style={{ marginLeft: 200, height: '100vh' }}>
+          <Channel />
+          <Footer style={{ textAlign: 'center' }}>Collaboration tool H</Footer>
+        </Layout>
+      </ChannelProvider>
+    </Layout>
   );
-}
+};
 
 export default App;
