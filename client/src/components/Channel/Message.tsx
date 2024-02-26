@@ -24,6 +24,9 @@ const Message = ({ message }: Props) => {
         style={{
           maxWidth: '30vw',
           background: isFromSelf ? 'yellow' : 'teal',
+          borderRadius: '0.4em',
+          padding: '10px',
+          width: '15em',
           float: isFromSelf ? 'left' : 'right',
         }}
       >
