@@ -1,5 +1,6 @@
 import { Avatar, Card, Tooltip } from 'antd';
 import React, { createElement, useState } from 'react';
+import { useUser } from '../../hooks/UserContext';
 
 export interface IMessage {
   id: string;
@@ -13,7 +14,9 @@ interface Props {
 }
 
 const Message = ({ message }: Props) => {
-  const isFromSelf = message.senderId === '1';
+  const { userId } = useUser();
+
+  const isFromSelf = message.senderId === userId;
   return (
     <div
       id="message-row"

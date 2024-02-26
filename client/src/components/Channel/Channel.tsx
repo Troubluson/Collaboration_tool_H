@@ -5,6 +5,7 @@ import Message, { IMessage } from './Message';
 import MessageInput from './MessageInput';
 import { IChannel } from '../../@types/Channel';
 import { useChannel } from '../../hooks/ChannelContext';
+import { useUser } from '../../hooks/UserContext';
 
 const { Title } = Typography;
 const { Header, Content } = Layout;
@@ -17,21 +18,18 @@ const Channel = () => {
   } = theme.useToken();
 
   const { currentChannel } = useChannel();
+  const { userId } = useUser();
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState<IMessage | null>(null);
 
-  const onMessageSent = async (message: string) => {
-    if (!currentChannel?.channelId) return;
+  const onMessageSent = (message: string) => {
+    if (!currentChannel?.channelId || !userId) return;
     const newMessage: Partial<IMessage> = {
       content: message,
-      senderId: '1',
+      senderId: userId,
       channelId: currentChannel.channelId,
     };
-    const sentMessage = await axios.post<IMessage>(
-      `${serverBaseURL}/channel/message`,
-      newMessage,
-    );
-    setMessages([...messages, sentMessage.data]);
+    axios.post<IMessage>(`${serverBaseURL}/channel/message`, newMessage);
   };
 
   const updateMessages = (message: IMessage) => {
