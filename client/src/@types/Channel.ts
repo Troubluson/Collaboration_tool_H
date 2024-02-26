@@ -1,6 +1,6 @@
 export interface IChannel {
     channelName: string;
-    channelId: number;
+    channelId: string;
 }
 
 export interface IChannelContext {

@@ -2,8 +2,10 @@ import { Avatar, Card, Tooltip } from 'antd';
 import React, { createElement, useState } from 'react';
 
 export interface IMessage {
+  id: string;
   content: string;
   senderId: string;
+  channelId: string;
 }
 
 interface Props {
@@ -25,7 +27,8 @@ const Message = ({ message }: Props) => {
           maxWidth: '30vw',
           background: isFromSelf ? 'yellow' : 'teal',
           borderRadius: '0.4em',
-          padding: '10px',
+          padding: '1em',
+          margin: '1em',
           width: '15em',
           float: isFromSelf ? 'left' : 'right',
         }}

@@ -1,38 +1,49 @@
 import asyncio
 import json
+from typing import Optional
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette import EventSourceResponse
+from pydantic import BaseModel
+import uuid
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:3000"
-]
+channels = {}
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
+class IMessage(BaseModel):
+    id: Optional[str] = None
+    content: str
+    senderId: str
+    channelId: str
 
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
 
-@app.get("/stream/")
-async def event_stream(req: Request):
+@app.get("/stream/{channel_id}")
+async def event_stream(req: Request, channel_id: str):
     async def event_publisher():
-        i = 0
+        messages_seen = 0
         try:
-          while True:
-              i += 1
-              yield json.dumps({"id": i, "message": "hello"})
-              await asyncio.sleep(1)
+            while True:
+                channel_messages = channels[channel_id] if channel_id in channels else []
+                if messages_seen < len(channel_messages):
+                    # Loop new massages
+                    for message in channel_messages[messages_seen:]:
+                        yield json.dumps(message.__dict__)
+                    messages_seen = len(channel_messages)
+                await asyncio.sleep(1)
         except asyncio.CancelledError as e:
           print(f"Disconnected from client (via refresh/close) {req.client}")
           # Do any other cleanup, if any
           raise e
     return EventSourceResponse(event_publisher())
+
+@app.post("/channel/message")
+async def send_message(message: IMessage):
+    channelId = message.channelId
+    message.id = str(uuid.uuid4())
+    messages = channels[channelId] if channelId in channels else []
+    messages.append(message)
+    channels[channelId] = messages
+    return message

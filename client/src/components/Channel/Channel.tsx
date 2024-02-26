@@ -1,5 +1,6 @@
 import { Flex, Layout, Typography, theme } from 'antd';
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import Message, { IMessage } from './Message';
 import MessageInput from './MessageInput';
 import { IChannel } from '../../@types/Channel';
@@ -8,10 +9,7 @@ import { useChannel } from '../../hooks/ChannelContext';
 const { Title } = Typography;
 const { Header, Content } = Layout;
 
-const initialMessages: IMessage[] = Array.from({ length: 5 }, (_, index) => ({
-  content: 'Mesasge ' + index,
-  senderId: (Math.floor(Math.random() * 10) % 2).toString(),
-}));
+const serverBaseURL = 'http://localhost:8000';
 
 const Channel = () => {
   const {
@@ -19,19 +17,57 @@ const Channel = () => {
   } = theme.useToken();
 
   const { currentChannel } = useChannel();
+  const [messages, setMessages] = useState<IMessage[]>([]);
+  const [newMessage, setNewMessage] = useState<IMessage | null>(null);
 
-  useEffect(() => {
-    //Fetch messages for channel
-  }, [currentChannel]);
-  const [messages, setMessages] = useState(initialMessages);
-
-  const onMessageSent = (message: string) => {
-    const newMessage: IMessage = {
+  const onMessageSent = async (message: string) => {
+    if (!currentChannel?.channelId) return;
+    const newMessage: Partial<IMessage> = {
       content: message,
       senderId: '1',
+      channelId: currentChannel.channelId,
     };
-    setMessages([...messages, newMessage]);
+    const sentMessage = await axios.post<IMessage>(
+      `${serverBaseURL}/channel/message`,
+      newMessage,
+    );
+    setMessages([...messages, sentMessage.data]);
   };
+
+  const updateMessages = (message: IMessage) => {
+    // Temporarily save new incoming messages to separate state to avoid message list resetting
+    setNewMessage(message);
+  };
+
+  useEffect(() => {
+    if (!newMessage) return;
+    setMessages([...messages, newMessage]);
+  }, [newMessage]);
+
+  useEffect(() => {
+    setMessages([]);
+    let eventSource: EventSource | null = null;
+    if (!currentChannel) return;
+    try {
+      eventSource = new EventSource(
+        `${serverBaseURL}/stream/${currentChannel.channelId}`,
+      );
+      eventSource.onmessage = (e) => {
+        updateMessages(JSON.parse(e.data));
+      };
+
+      eventSource.onerror = () => {
+        eventSource?.close();
+      };
+    } catch (error) {
+      eventSource?.close();
+      console.error('error', 'An unexpected error has occured', error);
+    }
+    return () => {
+      eventSource?.close();
+    };
+  }, [currentChannel, currentChannel?.channelId]);
+
   if (!currentChannel) {
     return (
       <Header style={{ padding: 0, background: colorBgContainer }}>
@@ -57,9 +93,19 @@ const Channel = () => {
             minHeight: '85vh',
           }}
         >
-          {messages.map((message) => (
-            <Message message={message} />
-          ))}
+          <Content
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '75vh',
+              overflowY: 'auto',
+              marginBottom: '1em',
+            }}
+          >
+            {messages.map((message) => (
+              <Message key={message.id} message={message} />
+            ))}
+          </Content>
           <MessageInput onSend={onMessageSent} />
         </Flex>
       </Content>

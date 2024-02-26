@@ -56,17 +56,16 @@ const SideBar = () => {
 
   // WIP
   const onItemSelect: MenuProps['onSelect'] = ({ key }) => {
-    const keyAsNum = Number(key);
     const availableChannelIndex = availableChannels
       .map((channel) => channel.channelId)
-      .indexOf(keyAsNum);
+      .indexOf(key);
     if (availableChannelIndex !== -1) {
       const channel = availableChannels[availableChannelIndex];
       joinChannel(channel);
       setChannel(channel);
       return;
     }
-    const channel = joinedChannels.find((channel) => channel.channelId === keyAsNum);
+    const channel = joinedChannels.find((channel) => channel.channelId === key);
     channel && setChannel(channel);
   };
 
