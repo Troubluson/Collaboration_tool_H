@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Message, { IMessage } from './Message';
 import MessageInput from './MessageInput';
-import { IChannel } from '../../@types/Channel';
 import { useChannel } from '../../hooks/ChannelContext';
 import { useUser } from '../../hooks/UserContext';
 

@@ -1,17 +1,11 @@
 import {
   AppstoreOutlined,
-  BarChartOutlined,
-  CloudOutlined,
   PlusCircleOutlined,
-  ShopOutlined,
   TeamOutlined,
-  UploadOutlined,
-  UserOutlined,
-  VideoCameraOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Layout, Menu, Typography } from 'antd';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { Logo } from '../Logo/Logo';
 import { useChannel } from '../../hooks/ChannelContext';
