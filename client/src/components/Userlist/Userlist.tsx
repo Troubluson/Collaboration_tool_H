@@ -4,9 +4,13 @@ import { useUser } from '../../hooks/UserContext';
 import { Avatar, List, theme } from 'antd';
 import { CheckCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
 import { useChannel } from '../../hooks/ChannelContext';
+import Title from 'antd/es/typography/Title';
+
+const textColor = '#a6aaae';
 
 const UserList = () => {
   //Get users either through props or useEffect, probably useEffect to update state
+
   const { userId } = useUser();
   const { currentChannel } = useChannel();
   const users: IUser[] = [
@@ -16,7 +20,7 @@ const UserList = () => {
     { id: '678', isActive: false, nickName: 'User678' },
   ];
   const getStatusDescription = (user: IUser) => {
-    let statusIcon = <MinusCircleTwoTone twoToneColor={'#eeeeee'} rev={undefined} />;
+    let statusIcon = <MinusCircleTwoTone twoToneColor={'#cccccc'} rev={undefined} />;
     let statusText = 'Offline';
     if (user.isActive) {
       statusIcon = <CheckCircleTwoTone twoToneColor={'#34c300'} rev={undefined} />;
@@ -32,22 +36,27 @@ const UserList = () => {
     return null;
   }
   return (
-    <Sider style={{ paddingTop: '2rem', paddingLeft: '1rem' }}>
+    <Sider style={{ padding: '0 1rem' }}>
       <List
+        header={
+          <Title style={{ color: textColor, borderBlockEnd: '1px solid' }} level={4}>
+            Users
+          </Title>
+        }
         itemLayout="horizontal"
         dataSource={users}
         renderItem={(user, index) => (
-          <List.Item>
+          <List.Item style={{ borderBlockEndColor: textColor }}>
             <List.Item.Meta
               avatar={
                 <Avatar
                   src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${index}`}
                   shape="circle"
-                  style={{ backgroundColor: '#a6aaae' }}
+                  style={{ backgroundColor: textColor }}
                   gap={1}
                 />
               }
-              title={<span style={{ color: '#a6aaae' }}>{user.nickName}</span>}
+              title={<span style={{ color: textColor }}>{user.nickName}</span>}
               description={getStatusDescription(user)}
             />
           </List.Item>
