@@ -1,12 +1,12 @@
 import './index.css';
 
-import { ConfigProvider, Layout, theme } from 'antd';
-import React, { useState } from 'react';
+import { Layout, theme } from 'antd';
 import SideBar from './components/Sidebar/Sidebar';
 import Channel from './components/Channel/Channel';
 import { ChannelProvider } from './hooks/ChannelContext';
+import { UserProvider } from './hooks/UserContext';
 
-const { Header, Content, Footer, Sider } = Layout;
+const { Footer } = Layout;
 
 const App = () => {
   const {
@@ -15,13 +15,15 @@ const App = () => {
 
   return (
     <Layout hasSider>
-      <ChannelProvider>
-        <SideBar />
-        <Layout style={{ marginLeft: 200, height: '100vh' }}>
-          <Channel />
-          <Footer style={{ textAlign: 'center' }}>Collaboration tool H</Footer>
-        </Layout>
-      </ChannelProvider>
+      <UserProvider>
+        <ChannelProvider>
+          <SideBar />
+          <Layout style={{ marginLeft: 200, height: '100vh' }}>
+            <Channel />
+            <Footer style={{ textAlign: 'center' }}>Collaboration tool H</Footer>
+          </Layout>
+        </ChannelProvider>
+      </UserProvider>
     </Layout>
   );
 };

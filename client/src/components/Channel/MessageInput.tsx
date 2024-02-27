@@ -1,5 +1,5 @@
 import { Button, Flex, Form } from 'antd';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface Props {
   onSend: (message: string) => void;

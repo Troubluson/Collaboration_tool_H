@@ -1,2 +1,3 @@
 fastapi
 hypercorn
+sse-starlette

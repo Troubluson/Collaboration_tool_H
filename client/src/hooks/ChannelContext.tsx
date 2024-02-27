@@ -16,15 +16,15 @@ interface Props {
 }
 
 const mockJoinedChannels: IChannel[] = [
-  { channelId: 1, channelName: 'Your Channel 1' },
-  { channelId: 2, channelName: 'Your Channel 2' },
-  { channelId: 3, channelName: 'Your Channel 3' },
+  { channelId: '1', channelName: 'Your Channel 1' },
+  { channelId: '2', channelName: 'Your Channel 2' },
+  { channelId: '3', channelName: 'Your Channel 3' },
 ];
 
 const mockAvailableChannels: IChannel[] = [
-  { channelId: 4, channelName: 'Channel 4' },
-  { channelId: 5, channelName: 'Channel 5' },
-  { channelId: 6, channelName: 'Channel 6' },
+  { channelId: '4', channelName: 'Channel 4' },
+  { channelId: '5', channelName: 'Channel 5' },
+  { channelId: '6', channelName: 'Channel 6' },
 ];
 
 export const ChannelProvider = ({ children }: Props) => {
