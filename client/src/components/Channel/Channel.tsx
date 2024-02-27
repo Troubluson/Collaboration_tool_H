@@ -5,6 +5,7 @@ import Message, { IMessage } from './Message';
 import MessageInput from './MessageInput';
 import { useChannel } from '../../hooks/ChannelContext';
 import { useUser } from '../../hooks/UserContext';
+import UserList from '../Userlist/Userlist';
 
 const { Title } = Typography;
 const { Header, Content } = Layout;
@@ -15,7 +16,6 @@ const Channel = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
-
   const { currentChannel } = useChannel();
   const { userId } = useUser();
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -66,18 +66,12 @@ const Channel = () => {
   }, [currentChannel, currentChannel?.channelId]);
 
   if (!currentChannel) {
-    return (
-      <Header style={{ padding: 0, background: colorBgContainer }}>
-        <Title level={2}>Select A Channel From the Sidebar</Title>
-      </Header>
-    );
+    return <ChannelHeader />;
   }
 
   return (
     <>
-      <Header style={{ padding: 0, background: colorBgContainer }}>
-        <Title level={2}>{currentChannel?.channelName}</Title>
-      </Header>
+      <ChannelHeader channelName={currentChannel.channelName} />
       <Content style={{ margin: '24px 16px 0', overflow: 'initial' }}>
         <Flex
           vertical
@@ -110,3 +104,18 @@ const Channel = () => {
   );
 };
 export default Channel;
+
+interface HeaderProps {
+  channelName?: string;
+}
+
+const ChannelHeader = ({ channelName }: HeaderProps) => {
+  const {
+    token: { colorBgContainer },
+  } = theme.useToken();
+  return (
+    <Header style={{ padding: 0, background: colorBgContainer }}>
+      <Title level={2}>{channelName ?? 'Select A Channel From the Sidebar'}</Title>
+    </Header>
+  );
+};

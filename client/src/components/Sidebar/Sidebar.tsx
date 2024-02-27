@@ -1,8 +1,4 @@
-import {
-  AppstoreOutlined,
-  PlusCircleOutlined,
-  TeamOutlined,
-} from '@ant-design/icons';
+import { AppstoreOutlined, PlusCircleOutlined, TeamOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Layout, Menu, Typography } from 'antd';
 import React from 'react';
