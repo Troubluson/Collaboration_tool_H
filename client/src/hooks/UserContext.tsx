@@ -1,9 +1,10 @@
 import { ReactNode, createContext, useContext, useState } from 'react';
-import { IUserContext } from '../@types/User';
-import { v4 as uuidv4 } from 'uuid';
+import { IUser, IUserContext } from '../@types/User';
+import Login from '../components/Login/Login';
 
 export const UserContext = createContext<IUserContext>({
-  userId: null,
+  user: null,
+  setUser: () => {},
 });
 export const useUser = (): IUserContext => useContext(UserContext);
 
@@ -12,15 +13,16 @@ interface Props {
 }
 
 export const UserProvider = ({ children }: Props) => {
-  const [userId, _setUserId] = useState<string>(uuidv4());
+  const [user, setUser] = useState<IUser | null>(null);
 
   return (
     <UserContext.Provider
       value={{
-        userId,
+        user,
+        setUser,
       }}
     >
-      {children}
+      {user ? children : <Login />}
     </UserContext.Provider>
   );
 };

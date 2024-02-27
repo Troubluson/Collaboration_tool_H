@@ -8,6 +8,7 @@ import uuid
 
 app = FastAPI()
 
+users = []
 channels = {}
 
 class IMessage(BaseModel):
@@ -15,6 +16,10 @@ class IMessage(BaseModel):
     content: str
     senderId: str
     channelId: str
+    
+class IUser(BaseModel):
+    id: Optional[str] = None
+    username: str
 
 @app.get("/")
 def read_root():
@@ -47,3 +52,9 @@ async def send_message(message: IMessage):
     messages.append(message)
     channels[channelId] = messages
     return message
+
+@app.post("/login")
+async def login(user: IUser):
+    user.id = str(uuid.uuid4())
+    users.append(user)
+    return user
