@@ -6,5 +6,6 @@ export interface IUser {
 
 export interface IUserContext {
   user: IUser | null;
-  setUser: (user: IUser) => void;
+  setUser: (user: IUser | null) => void;
+  logout: () => void;
 }

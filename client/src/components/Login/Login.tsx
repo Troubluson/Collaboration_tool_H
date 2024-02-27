@@ -4,7 +4,7 @@ import { Content } from 'antd/es/layout/layout';
 import axios from 'axios';
 import { IUser } from '../../@types/User';
 import { useUser } from '../../hooks/UserContext';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 const serverBaseURL = 'http://localhost:8000';
 
@@ -13,7 +13,7 @@ const Login = () => {
     token: { colorBgContainer, borderRadiusLG, paddingLG },
   } = theme.useToken();
 
-  const { setUser } = useUser();
+  const { setUser, logout } = useUser();
 
   const onFinish = async ({ username }: Partial<IUser>) => {
     const { data } = await axios.post<IUser>(`${serverBaseURL}/login`, { username });
