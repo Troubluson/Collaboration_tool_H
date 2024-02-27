@@ -5,6 +5,7 @@ import Login from '../components/Login/Login';
 export const UserContext = createContext<IUserContext>({
   user: null,
   setUser: () => {},
+  logout: () => {},
 });
 export const useUser = (): IUserContext => useContext(UserContext);
 
@@ -15,11 +16,17 @@ interface Props {
 export const UserProvider = ({ children }: Props) => {
   const [user, setUser] = useState<IUser | null>(null);
 
+  const logout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
   return (
     <UserContext.Provider
       value={{
         user,
         setUser,
+        logout,
       }}
     >
       {user ? children : <Login />}

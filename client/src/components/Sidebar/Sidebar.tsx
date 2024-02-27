@@ -1,10 +1,11 @@
 import { AppstoreOutlined, PlusCircleOutlined, TeamOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Layout, Menu, Typography } from 'antd';
-import React from 'react';
+import { Button, Flex, Layout, Menu, Space, Typography } from 'antd';
+import React, { useEffect } from 'react';
 
 import { Logo } from '../Logo/Logo';
 import { useChannel } from '../../hooks/ChannelContext';
+import { useUser } from '../../hooks/UserContext';
 
 const { Sider } = Layout;
 
@@ -28,6 +29,8 @@ function getItem(
 
 const SideBar = () => {
   const { availableChannels, joinedChannels, setChannel, joinChannel } = useChannel();
+  const { user, logout } = useUser();
+
   const items: MenuProps['items'] = [
     getItem(
       'Your Channels',
@@ -70,13 +73,10 @@ const SideBar = () => {
         bottom: 0,
       }}
     >
-      <div
-        className="demo-logo-vertical"
-        style={{ display: 'flex', color: 'white', alignItems: 'center' }}
-      >
+      <Flex style={{ alignItems: 'center' }}>
         <Logo />
         <Typography>Collaboration tool</Typography>
-      </div>
+      </Flex>
       <Menu
         theme="dark"
         mode="inline"
@@ -84,6 +84,31 @@ const SideBar = () => {
         onSelect={onItemSelect}
         items={items}
       />
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '1rem',
+          paddingLeft: '2rem',
+          width: '100%',
+          display: 'flex',
+        }}
+      >
+        <Space size={20}>
+          <Typography
+            style={{
+              color: 'whitesmoke',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              alignSelf: 'baseline',
+            }}
+          >
+            {user?.username}
+          </Typography>
+          <Button ghost danger size="small" onClick={logout}>
+            Logout
+          </Button>
+        </Space>
+      </div>
     </Sider>
   );
 };
