@@ -10,10 +10,6 @@ import UserList from './components/Userlist/Userlist';
 const { Footer } = Layout;
 
 const App = () => {
-  const {
-    token: { colorBgContainer },
-  } = theme.useToken();
-
   return (
     <ConfigProvider
       theme={{

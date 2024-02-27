@@ -12,9 +12,9 @@ interface Props {
 }
 
 const Message = ({ message }: Props) => {
-  const { userId } = useUser();
+  const { user } = useUser();
 
-  const isFromSelf = message.senderId === userId;
+  const isFromSelf = message.senderId === user?.id;
   return (
     <div
       id="message-row"

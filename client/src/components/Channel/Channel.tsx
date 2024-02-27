@@ -17,15 +17,15 @@ const Channel = () => {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
   const { currentChannel } = useChannel();
-  const { userId } = useUser();
+  const { user } = useUser();
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState<IMessage | null>(null);
 
   const onMessageSent = (message: string) => {
-    if (!currentChannel?.channelId || !userId) return;
+    if (!currentChannel?.channelId || !user) return;
     const newMessage: Partial<IMessage> = {
       content: message,
-      senderId: userId,
+      senderId: user.id,
       channelId: currentChannel.channelId,
     };
     axios.post<IMessage>(`${serverBaseURL}/channel/message`, newMessage);
