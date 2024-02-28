@@ -13,7 +13,7 @@ const Login = () => {
     token: { colorBgContainer, borderRadiusLG, paddingLG },
   } = theme.useToken();
 
-  const { setUser, logout } = useUser();
+  const { setUser } = useUser();
 
   const onFinish = async ({ username }: Partial<IUser>) => {
     const { data } = await axios.post<IUser>(`${serverBaseURL}/login`, { username });
@@ -24,7 +24,11 @@ const Login = () => {
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const user: IUser = {
+        ...JSON.parse(savedUser),
+        isActive: true,
+      };
+      setUser(user);
     }
   }, []);
 

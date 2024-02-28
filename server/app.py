@@ -20,6 +20,7 @@ class IMessage(BaseModel):
 class IUser(BaseModel):
     id: Optional[str] = None
     username: str
+    isActive: Optional[bool] = False
 
 @app.get("/")
 def read_root():
@@ -56,5 +57,6 @@ async def send_message(message: IMessage):
 @app.post("/login")
 async def login(user: IUser):
     user.id = str(uuid.uuid4())
+    user.isActive = True
     users.append(user)
     return user
