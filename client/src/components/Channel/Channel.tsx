@@ -22,11 +22,11 @@ const Channel = () => {
   const [newMessage, setNewMessage] = useState<IMessage | null>(null);
 
   const onMessageSent = (message: string) => {
-    if (!currentChannel?.channelId || !user) return;
+    if (!currentChannel?.id || !user) return;
     const newMessage: Partial<IMessage> = {
       content: message,
       senderId: user.id,
-      channelId: currentChannel.channelId,
+      channelId: currentChannel.id,
     };
     axios.post<IMessage>(`${serverBaseURL}/channel/message`, newMessage);
   };
@@ -47,7 +47,7 @@ const Channel = () => {
     if (!currentChannel) return;
     try {
       eventSource = new EventSource(
-        `${serverBaseURL}/stream/${currentChannel.channelId}`,
+        `${serverBaseURL}/stream/${currentChannel.id}`,
       );
       eventSource.onmessage = (e) => {
         updateMessages(JSON.parse(e.data));
@@ -63,7 +63,7 @@ const Channel = () => {
     return () => {
       eventSource?.close();
     };
-  }, [currentChannel, currentChannel?.channelId]);
+  }, [currentChannel, currentChannel?.id]);
 
   if (!currentChannel) {
     return <ChannelHeader />;
@@ -71,7 +71,7 @@ const Channel = () => {
 
   return (
     <>
-      <ChannelHeader channelName={currentChannel.channelName} />
+      <ChannelHeader channelName={currentChannel.name} />
       <Content style={{ margin: '24px 16px 0', overflow: 'initial' }}>
         <Flex
           vertical

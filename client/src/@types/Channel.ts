@@ -1,6 +1,9 @@
+import { IUser } from './User';
+
 export interface IChannel {
-    channelName: string;
-    channelId: string;
+    id: string;
+    name: string;
+    users: IUser[];
 }
 
 export interface IChannelContext {

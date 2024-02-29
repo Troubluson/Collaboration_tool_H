@@ -6,11 +6,6 @@ from sse_starlette import EventSourceResponse
 from pydantic import BaseModel
 import uuid
 
-app = FastAPI()
-
-users = []
-channels = {}
-
 class IMessage(BaseModel):
     id: Optional[str] = None
     content: str
@@ -21,6 +16,17 @@ class IUser(BaseModel):
     id: Optional[str] = None
     username: str
     isActive: Optional[bool] = False
+
+class IChannel(BaseModel):
+    id: Optional[str] = None
+    name: str
+    users: list[IUser] = []
+    messages: list[IMessage] = []
+
+app = FastAPI()
+
+users: list[IUser] = []
+channels: list[IChannel] = []
 
 @app.get("/")
 def read_root():
@@ -60,3 +66,13 @@ async def login(user: IUser):
     user.isActive = True
     users.append(user)
     return user
+
+@app.get("/channels")
+async def get_channels():
+    return channels
+
+@app.post("/channels")
+async def create_channel(channel: IChannel):
+    channel.id = uuid.uuid4()
+    channels.append(channel)
+    return channel
