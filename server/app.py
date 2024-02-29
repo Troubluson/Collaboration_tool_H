@@ -73,6 +73,13 @@ async def get_channels():
 
 @app.post("/channels")
 async def create_channel(channel: IChannel):
-    channel.id = uuid.uuid4()
+    channel.id = str(uuid.uuid4())
     channels.append(channel)
     return channel
+
+@app.post("/channels/{channel_id}/join")
+async def join_channel(channel_id, user: IUser):
+    index = next((index for (index, c) in enumerate(channels) if c.id == channel_id), None)
+    if index is None: return "Bad request", 400
+    channels[index].users.append(user)
+    return channels[index]

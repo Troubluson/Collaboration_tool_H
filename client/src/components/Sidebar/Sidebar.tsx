@@ -63,8 +63,7 @@ const SideBar = () => {
       .indexOf(key);
     if (availableChannelIndex !== -1) {
       const channel = availableChannels[availableChannelIndex];
-      joinChannel(channel);
-      setChannel(channel);
+      joinExistingChannel(channel);
       return;
     }
     const channel = joinedChannels.find((channel) => channel.id === key);
@@ -72,10 +71,22 @@ const SideBar = () => {
   };
 
   const createChannel = async () => {
-    const res = await axios.post<IChannel>(`${serverBaseURL}/channels`, { name, users: [user] });
+    const res = await axios.post<IChannel>(`${serverBaseURL}/channels`, {
+      name,
+      users: [user],
+    });
     joinChannel(res.data);
     setIsModalOpen(false);
-  }
+  };
+
+  const joinExistingChannel = async (channel: IChannel) => {
+    const res = await axios.post<IChannel>(
+      `${serverBaseURL}/channels/${channel.id}/join`,
+      user,
+    );
+    joinChannel(res.data);
+    setChannel(res.data);
+  };
 
   return (
     <Sider
@@ -125,10 +136,20 @@ const SideBar = () => {
         </Space>
       </div>
 
-      <Modal title="Create Channel" open={isModalOpen} okButtonProps={{ disabled: !name }} onOk={createChannel} onCancel={() => setIsModalOpen(false)}>
-        <Input placeholder='Channel Name' value={name} onChange={(e) => setName(e.target.value)} />
+      <Modal
+        title="Create Channel"
+        open={isModalOpen}
+        okButtonProps={{ disabled: !name }}
+        onOk={createChannel}
+        onCancel={() => setIsModalOpen(false)}
+      >
+        <Input
+          placeholder="Channel Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
       </Modal>
-    </Sider >
+    </Sider>
   );
 };
 

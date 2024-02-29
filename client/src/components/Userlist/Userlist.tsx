@@ -42,7 +42,7 @@ const UserList = () => {
         itemLayout="horizontal"
         dataSource={users}
         renderItem={(u, index) => (
-          <List.Item style={{ borderBlockEndColor: textColor }}>
+          <List.Item key={u.id} style={{ borderBlockEndColor: textColor }}>
             <List.Item.Meta
               avatar={
                 <Avatar
