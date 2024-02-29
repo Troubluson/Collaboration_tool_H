@@ -1,5 +1,9 @@
-import { ReactNode, createContext, useContext, useState } from 'react';
+import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { IChannelContext, IChannel } from '../@types/Channel';
+import axios from 'axios';
+import { useUser } from './UserContext';
+
+const serverBaseURL = 'http://localhost:8000';
 
 export const ChannelContext = createContext<IChannelContext>({
   joinedChannels: [],
@@ -15,37 +19,35 @@ interface Props {
   children: ReactNode;
 }
 
-const mockJoinedChannels: IChannel[] = [
-  { channelId: '1', channelName: 'Your Channel 1' },
-  { channelId: '2', channelName: 'Your Channel 2' },
-  { channelId: '3', channelName: 'Your Channel 3' },
-];
-
-const mockAvailableChannels: IChannel[] = [
-  { channelId: '4', channelName: 'Channel 4' },
-  { channelId: '5', channelName: 'Channel 5' },
-  { channelId: '6', channelName: 'Channel 6' },
-];
-
 export const ChannelProvider = ({ children }: Props) => {
-  const [joinedChannels, setJoinedChannels] = useState<IChannel[]>(mockJoinedChannels);
-  const [availableChannels, setAvailableChannels] =
-    useState<IChannel[]>(mockAvailableChannels);
+  const { user } = useUser();
+  const [joinedChannels, setJoinedChannels] = useState<IChannel[]>([]);
+  const [availableChannels, setAvailableChannels] = useState<IChannel[]>([]);
   const [currentChannel, setCurrentChannel] = useState<IChannel | null>(null);
 
   const joinChannel = (channel: IChannel) => {
     setJoinedChannels([...joinedChannels, channel]);
     setAvailableChannels(
-      availableChannels.filter((ch) => ch.channelId != channel.channelId),
+      availableChannels.filter((ch) => ch.id != channel.id),
     );
   };
 
   const leaveChannel = (channel: IChannel) => {
     setAvailableChannels([...availableChannels, channel]);
-    setJoinedChannels(joinedChannels.filter((ch) => ch.channelId != channel.channelId));
+    setJoinedChannels(joinedChannels.filter((ch) => ch.id != channel.id));
   };
 
   const setChannel = (channel: IChannel) => setCurrentChannel(channel);
+
+  const fetchChannels = async () => {
+    const { data } = await axios.get<IChannel[]>(`${serverBaseURL}/channels`);
+    setAvailableChannels(data.filter((channel) => channel.users.every((u) => u.id !== user?.id)));
+    setJoinedChannels(data.filter((channel) => channel.users.some((u) => u.id === user?.id)))
+  }
+
+  useEffect(() => {
+    fetchChannels();
+  }, [user?.id]);
 
   return (
     <ChannelContext.Provider

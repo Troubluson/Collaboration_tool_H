@@ -1,17 +1,16 @@
 import { Flex, Layout, Typography, theme } from 'antd';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Message, { IMessage } from './Message';
+import Message from './Message';
 import MessageInput from './MessageInput';
 import { useChannel } from '../../hooks/ChannelContext';
 import { useUser } from '../../hooks/UserContext';
-import UserList from '../Userlist/Userlist';
+import { IMessage } from '../../@types/Message';
 
 const { Title } = Typography;
 const { Header, Content } = Layout;
 
 const serverBaseURL = 'http://localhost:8000';
-
 const Channel = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
@@ -22,11 +21,11 @@ const Channel = () => {
   const [newMessage, setNewMessage] = useState<IMessage | null>(null);
 
   const onMessageSent = (message: string) => {
-    if (!currentChannel?.channelId || !user) return;
+    if (!currentChannel?.id || !user) return;
     const newMessage: Partial<IMessage> = {
       content: message,
-      senderId: user.id,
-      channelId: currentChannel.channelId,
+      sender: user,
+      channelId: currentChannel.id,
     };
     axios.post<IMessage>(`${serverBaseURL}/channel/message`, newMessage);
   };
@@ -46,9 +45,7 @@ const Channel = () => {
     let eventSource: EventSource | null = null;
     if (!currentChannel) return;
     try {
-      eventSource = new EventSource(
-        `${serverBaseURL}/stream/${currentChannel.channelId}`,
-      );
+      eventSource = new EventSource(`${serverBaseURL}/stream/${currentChannel.id}`);
       eventSource.onmessage = (e) => {
         updateMessages(JSON.parse(e.data));
       };
@@ -63,7 +60,7 @@ const Channel = () => {
     return () => {
       eventSource?.close();
     };
-  }, [currentChannel, currentChannel?.channelId]);
+  }, [currentChannel, currentChannel?.id]);
 
   if (!currentChannel) {
     return <ChannelHeader />;
@@ -71,7 +68,7 @@ const Channel = () => {
 
   return (
     <>
-      <ChannelHeader channelName={currentChannel.channelName} />
+      <ChannelHeader channelName={currentChannel.name} />
       <Content style={{ margin: '24px 16px 0', overflow: 'initial' }}>
         <Flex
           vertical

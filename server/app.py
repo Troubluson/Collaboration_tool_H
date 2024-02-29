@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import json
 from typing import Optional
 from fastapi import FastAPI, Request
@@ -6,21 +7,32 @@ from sse_starlette import EventSourceResponse
 from pydantic import BaseModel
 import uuid
 
-app = FastAPI()
-
-users = []
-channels = {}
-
-class IMessage(BaseModel):
-    id: Optional[str] = None
-    content: str
-    senderId: str
-    channelId: str
-    
 class IUser(BaseModel):
     id: Optional[str] = None
     username: str
     isActive: Optional[bool] = False
+
+class IMessage(BaseModel):
+    id: Optional[str] = None
+    content: str
+    sender: IUser
+    channelId: str
+
+class IChannel(BaseModel):
+    id: Optional[str] = None
+    name: str
+    users: list[IUser] = []
+    messages: list[IMessage] = []
+
+app = FastAPI()
+
+users: list[IUser] = []
+channels: list[IChannel] = []
+
+def serialize_message(message: IMessage):
+    message_copy = copy.copy(message)
+    message_copy.sender = message.sender.__dict__
+    return message_copy.__dict__
 
 @app.get("/")
 def read_root():
@@ -28,17 +40,19 @@ def read_root():
 
 @app.get("/stream/{channel_id}")
 async def event_stream(req: Request, channel_id: str):
+    channel_index = next((index for (index, c) in enumerate(channels) if c.id == channel_id), None)
+    if channel_index is None: return "Channel not found", 400
     async def event_publisher():
         messages_seen = 0
         try:
             while True:
-                channel_messages = channels[channel_id] if channel_id in channels else []
+                channel_messages = channels[channel_index].messages
                 if messages_seen < len(channel_messages):
                     # Loop new massages
                     for message in channel_messages[messages_seen:]:
-                        yield json.dumps(message.__dict__)
+                        yield json.dumps(serialize_message(message))
                     messages_seen = len(channel_messages)
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.1)
         except asyncio.CancelledError as e:
           print(f"Disconnected from client (via refresh/close) {req.client}")
           # Do any other cleanup, if any
@@ -48,10 +62,10 @@ async def event_stream(req: Request, channel_id: str):
 @app.post("/channel/message")
 async def send_message(message: IMessage):
     channelId = message.channelId
+    index = next((index for (index, c) in enumerate(channels) if c.id == channelId), None)
+    if index is None: return "Channel not found", 400
     message.id = str(uuid.uuid4())
-    messages = channels[channelId] if channelId in channels else []
-    messages.append(message)
-    channels[channelId] = messages
+    channels[index].messages.append(message)
     return message
 
 @app.post("/login")
@@ -60,3 +74,20 @@ async def login(user: IUser):
     user.isActive = True
     users.append(user)
     return user
+
+@app.get("/channels")
+async def get_channels():
+    return channels
+
+@app.post("/channels")
+async def create_channel(channel: IChannel):
+    channel.id = str(uuid.uuid4())
+    channels.append(channel)
+    return channel
+
+@app.post("/channels/{channel_id}/join")
+async def join_channel(channel_id, user: IUser):
+    index = next((index for (index, c) in enumerate(channels) if c.id == channel_id), None)
+    if index is None: return "Channel not found", 400
+    channels[index].users.append(user)
+    return channels[index]
