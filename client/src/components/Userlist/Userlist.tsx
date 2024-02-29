@@ -11,14 +11,10 @@ const textColor = '#a6aaae';
 const UserList = () => {
   //Get users either through props or useEffect, probably useEffect to update state
 
-  const { userId } = useUser();
+  const { user } = useUser();
   const { currentChannel } = useChannel();
-  const users: IUser[] = [
-    { id: userId ?? '', isActive: true, nickName: 'You' },
-    { id: '123', isActive: true, nickName: 'User123' },
-    { id: '456', isActive: true, nickName: 'User456' },
-    { id: '678', isActive: false, nickName: 'User678' },
-  ];
+  const users: IUser[] = currentChannel?.users || [];
+
   const getStatusDescription = (user: IUser) => {
     let statusIcon = <MinusCircleTwoTone twoToneColor={'#cccccc'} rev={undefined} />;
     let statusText = 'Offline';
@@ -45,7 +41,7 @@ const UserList = () => {
         }
         itemLayout="horizontal"
         dataSource={users}
-        renderItem={(user, index) => (
+        renderItem={(u, index) => (
           <List.Item style={{ borderBlockEndColor: textColor }}>
             <List.Item.Meta
               avatar={
@@ -56,8 +52,8 @@ const UserList = () => {
                   gap={1}
                 />
               }
-              title={<span style={{ color: textColor }}>{user.nickName}</span>}
-              description={getStatusDescription(user)}
+              title={<span style={{ color: textColor }}>{u.id === user?.id ? 'You' : u.username}</span>}
+              description={getStatusDescription(u)}
             />
           </List.Item>
         )}
