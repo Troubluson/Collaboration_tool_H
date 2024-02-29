@@ -76,6 +76,7 @@ const SideBar = () => {
       users: [user],
     });
     joinChannel(res.data);
+    setChannel(res.data);
     setIsModalOpen(false);
   };
 

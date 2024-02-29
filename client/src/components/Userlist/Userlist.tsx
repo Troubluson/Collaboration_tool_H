@@ -41,12 +41,12 @@ const UserList = () => {
         }
         itemLayout="horizontal"
         dataSource={users}
-        renderItem={(u, index) => (
+        renderItem={(u) => (
           <List.Item key={u.id} style={{ borderBlockEndColor: textColor }}>
             <List.Item.Meta
               avatar={
                 <Avatar
-                  src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${index}`}
+                  src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${u.id}`}
                   shape="circle"
                   style={{ backgroundColor: textColor }}
                   gap={1}

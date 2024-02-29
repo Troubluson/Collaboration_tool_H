@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import json
 from typing import Optional
 from fastapi import FastAPI, Request
@@ -6,16 +7,16 @@ from sse_starlette import EventSourceResponse
 from pydantic import BaseModel
 import uuid
 
-class IMessage(BaseModel):
-    id: Optional[str] = None
-    content: str
-    senderId: str
-    channelId: str
-    
 class IUser(BaseModel):
     id: Optional[str] = None
     username: str
     isActive: Optional[bool] = False
+
+class IMessage(BaseModel):
+    id: Optional[str] = None
+    content: str
+    sender: IUser
+    channelId: str
 
 class IChannel(BaseModel):
     id: Optional[str] = None
@@ -27,6 +28,11 @@ app = FastAPI()
 
 users: list[IUser] = []
 channels: list[IChannel] = []
+
+def serialize_message(message: IMessage):
+    message_copy = copy.copy(message)
+    message_copy.sender = message.sender.__dict__
+    return message_copy.__dict__
 
 @app.get("/")
 def read_root():
@@ -44,9 +50,9 @@ async def event_stream(req: Request, channel_id: str):
                 if messages_seen < len(channel_messages):
                     # Loop new massages
                     for message in channel_messages[messages_seen:]:
-                        yield json.dumps(message.__dict__)
+                        yield json.dumps(serialize_message(message))
                     messages_seen = len(channel_messages)
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.1)
         except asyncio.CancelledError as e:
           print(f"Disconnected from client (via refresh/close) {req.client}")
           # Do any other cleanup, if any

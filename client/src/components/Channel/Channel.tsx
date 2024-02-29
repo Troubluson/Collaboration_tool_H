@@ -1,17 +1,16 @@
 import { Flex, Layout, Typography, theme } from 'antd';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Message, { IMessage } from './Message';
+import Message from './Message';
 import MessageInput from './MessageInput';
 import { useChannel } from '../../hooks/ChannelContext';
 import { useUser } from '../../hooks/UserContext';
-import UserList from '../Userlist/Userlist';
+import { IMessage } from '../../@types/Message';
 
 const { Title } = Typography;
 const { Header, Content } = Layout;
 
 const serverBaseURL = 'http://localhost:8000';
-
 const Channel = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
@@ -25,7 +24,7 @@ const Channel = () => {
     if (!currentChannel?.id || !user) return;
     const newMessage: Partial<IMessage> = {
       content: message,
-      senderId: user.id,
+      sender: user,
       channelId: currentChannel.id,
     };
     axios.post<IMessage>(`${serverBaseURL}/channel/message`, newMessage);
@@ -46,9 +45,7 @@ const Channel = () => {
     let eventSource: EventSource | null = null;
     if (!currentChannel) return;
     try {
-      eventSource = new EventSource(
-        `${serverBaseURL}/stream/${currentChannel.id}`,
-      );
+      eventSource = new EventSource(`${serverBaseURL}/stream/${currentChannel.id}`);
       eventSource.onmessage = (e) => {
         updateMessages(JSON.parse(e.data));
       };
