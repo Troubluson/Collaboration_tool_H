@@ -8,7 +8,8 @@ from pydantic import BaseModel
 from uuid import uuid4
 
 from Models.Requests import CreateChannelRequest
-from server.utils.helpers import findFromList
+from Models.Exceptions import AlreadyExists, BadParameters, EntityDoesNotExist, InvalidSender
+from utils.helpers import findFromList
 
 
 class IUser(BaseModel):
@@ -46,7 +47,7 @@ def read_root():
 async def event_stream(req: Request, channel_id: str):
     channel = findFromList(channels, 'id', channel_id)
     if channel is None: 
-        raise HTTPException(status_code=400, detail="Channel does not exit")
+        raise EntityDoesNotExist("Channel")
     async def event_publisher():
         messages_seen = 0
         try:
@@ -69,7 +70,7 @@ async def send_message(message: IMessage):
     channelId = message.channelId
     channel = findFromList(channels, 'id', channelId)
     if channel is None: 
-        raise HTTPException(status_code=400, detail="Channel does not exit")
+        raise EntityDoesNotExist("Channel")
     message.id = str(uuid4())
     channel.messages.append(message)
     return message
@@ -77,8 +78,8 @@ async def send_message(message: IMessage):
 @app.post("/login")
 async def login(sentUser: IUser):
     username = sentUser.username.strip()
-    if username == "":
-        raise HTTPException(status_code=400, detail=f"Username cannot be empty")
+    if username == "" or username is None:
+        raise BadParameters(why="Username cannot be empty")
     user = IUser(id=uuid4, username=username, isActive=True)
     users.append(user)
     return user
@@ -95,9 +96,9 @@ async def create_channel(request: CreateChannelRequest):
     user = findFromList(users, "id", user_id)
 
     if user is None:
-        raise HTTPException(status_code=400, detail=f"{base_error}, user does not exit")
+        raise InvalidSender()
     if any(existingChannel for existingChannel in channels if existingChannel.name == channel_name):
-        raise HTTPException(status_code=400, detail=f"{base_error}, channel with name {channel_name} already exists")
+        raise AlreadyExists(what="Channel")
     
     channel = IChannel(id=str(uuid4()), name=channel_name, users=[user])
     print(channel.model_dump())
