@@ -1,13 +1,25 @@
 import { AppstoreOutlined, PlusCircleOutlined, TeamOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Button, Flex, Form, Input, Layout, Menu, Modal, Space, Typography } from 'antd';
+import {
+  Button,
+  Flex,
+  Form,
+  Input,
+  Layout,
+  Menu,
+  Modal,
+  Space,
+  Typography,
+  message,
+} from 'antd';
 import React, { useEffect, useState } from 'react';
 
 import { Logo } from '../Logo/Logo';
 import { useChannel } from '../../hooks/ChannelContext';
 import { useUser } from '../../hooks/UserContext';
-import axios from 'axios';
-import { IChannel } from '../../@types/Channel';
+import axios, { AxiosError } from 'axios';
+import { CreateChannelRequest, IChannel } from '../../@types/Channel';
+import { ErrorResponse } from '../../@types/ErrorResponse';
 
 const serverBaseURL = 'http://localhost:8000';
 const { Sider } = Layout;
@@ -71,13 +83,22 @@ const SideBar = () => {
   };
 
   const createChannel = async () => {
-    const res = await axios.post<IChannel>(`${serverBaseURL}/channels`, {
-      name,
-      users: [user],
-    });
-    joinChannel(res.data);
-    setChannel(res.data);
-    setIsModalOpen(false);
+    try {
+      const { data: channel } = await axios.post<IChannel>(`${serverBaseURL}/channels`, {
+        name,
+        userId: user?.id,
+      } as CreateChannelRequest);
+      joinChannel(channel);
+      setChannel(channel);
+      setIsModalOpen(false);
+    } catch (e) {
+      if (axios.isAxiosError(e) && e.response) {
+        const responseError = e.response?.data?.detail as ErrorResponse;
+        message.error(`${responseError.type}: ${responseError.reason}`);
+      } else {
+        message.error((e as Error).message);
+      }
+    }
   };
 
   const joinExistingChannel = async (channel: IChannel) => {

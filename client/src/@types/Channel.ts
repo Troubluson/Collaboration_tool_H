@@ -14,3 +14,9 @@ export interface IChannelContext {
     joinChannel: (channel: IChannel) => void;
     leaveChannel: (channel: IChannel) => void;
 };
+
+export interface CreateChannelRequest {
+    name: string;
+    userId: string;
+
+}
