@@ -77,12 +77,15 @@ async def send_message(message: IMessage):
 
 @app.post("/login")
 async def login(sentUser: IUser):
-    username = sentUser.username.strip()
-    if username == "" or username is None:
-        raise BadParameters(why="Username cannot be empty")
-    user = IUser(id=uuid4, username=username, isActive=True)
-    users.append(user)
-    return user
+    try: 
+        username = sentUser.username.strip()
+        if username == "" or username is None:
+            raise BadParameters(why="Username cannot be empty")
+        user = IUser(id=str(uuid4()), username=username, isActive=True)
+        users.append(user)
+        return user
+    except:
+        raise HTTPException(500, "An unknown error occured")
 
 @app.get("/channels")
 async def get_channels():
@@ -101,7 +104,6 @@ async def create_channel(request: CreateChannelRequest):
         raise AlreadyExists(what="Channel")
     
     channel = IChannel(id=str(uuid4()), name=channel_name, users=[user])
-    print(channel.model_dump())
     channels.append(channel)
     return channel
 
