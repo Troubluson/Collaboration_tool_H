@@ -19,7 +19,8 @@ const Channel = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
-  const { currentChannel, userJoinChannel, userLeaveChannel } = useChannel();
+  const { currentChannel, userJoinChannel, userLeaveChannel, updateUserStatus } =
+    useChannel();
   const { user } = useUser();
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [newEvent, setNewEvent] = useState<IChannelEvent | null>(null);
@@ -60,6 +61,9 @@ const Channel = () => {
       case 'user_leave':
         userLeaveChannel(newEvent.content as IUser);
         break;
+      case 'user_status_change':
+        updateUserStatus(newEvent.content as IUser);
+        break;
       default:
         console.error('Unrecognized event', newEvent);
         break;
@@ -69,9 +73,11 @@ const Channel = () => {
   useEffect(() => {
     setMessages([]);
     let eventSource: EventSource | null = null;
-    if (!currentChannel) return;
+    if (!currentChannel || !user?.id) return;
     try {
-      eventSource = new EventSource(`${serverBaseURL}/stream/${currentChannel.id}`);
+      eventSource = new EventSource(
+        `${serverBaseURL}/stream/${currentChannel.id}?user_id=${user?.id}`,
+      );
       eventSource.onmessage = (e) => {
         handleChannelEvents(JSON.parse(e.data));
       };
@@ -86,7 +92,7 @@ const Channel = () => {
     return () => {
       eventSource?.close();
     };
-  }, [currentChannel?.id]);
+  }, [currentChannel?.id, user?.id]);
 
   if (!currentChannel) {
     return <ChannelHeader />;

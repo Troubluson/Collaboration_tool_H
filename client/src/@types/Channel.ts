@@ -7,7 +7,7 @@ export interface IChannel {
   users: IUser[];
 }
 
-type IChannelEvents = 'new_message' | 'user_join' | 'user_leave';
+type IChannelEvents = 'new_message' | 'user_join' | 'user_leave' | 'user_status_change';
 
 export interface IChannelEvent {
   type: IChannelEvents;
@@ -23,6 +23,7 @@ export interface IChannelContext {
   leaveChannel: () => void;
   userJoinChannel: (user: IUser) => void;
   userLeaveChannel: (user: IUser) => void;
+  updateUserStatus: (user: IUser) => void;
 }
 
 export interface CreateChannelRequest {
