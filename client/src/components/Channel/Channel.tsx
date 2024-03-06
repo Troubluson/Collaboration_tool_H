@@ -1,8 +1,6 @@
-import { Flex, Layout, Typography, theme, message, Button } from 'antd';
+import { Flex, Layout, Typography, Tabs, theme, message, Button } from 'antd';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Message from './Message';
-import MessageInput from './MessageInput';
 import { useChannel } from '../../hooks/ChannelContext';
 import { useUser } from '../../hooks/UserContext';
 import { IMessage } from '../../@types/Message';
@@ -10,6 +8,9 @@ import { IChannelEvent } from '../../@types/Channel';
 import { IUser } from '../../@types/User';
 import { ErrorResponse } from '../../@types/ErrorResponse';
 import { ApiOutlined } from '@ant-design/icons';
+import MessageInput from './MessageInput';
+import Message from './Message';
+import CollaborativeFileTab from '../CollaborativeFile/CollaborativeFileTab';
 
 const { Title } = Typography;
 const { Header, Content } = Layout;
@@ -97,37 +98,54 @@ const Channel = () => {
   if (!currentChannel) {
     return <ChannelHeader />;
   }
+  const chat = (
+    <Flex
+      vertical
+      justify="space-between"
+      style={{
+        padding: 24,
+        textAlign: 'center',
+        background: colorBgContainer,
+        borderRadius: borderRadiusLG,
+        minHeight: '85vh',
+      }}
+    >
+      <Content
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '75vh',
+          overflowY: 'auto',
+          marginBottom: '1em',
+        }}
+      >
+        {messages.map((message) => (
+          <Message key={message.id} message={message} />
+        ))}
+      </Content>
+      <MessageInput onSend={onMessageSent} />
+    </Flex>
+  );
 
   return (
     <>
       <ChannelHeader channelName={currentChannel.name} />
       <Content style={{ margin: '24px 16px 0', overflow: 'initial' }}>
-        <Flex
-          vertical
-          justify="space-between"
-          style={{
-            padding: 24,
-            textAlign: 'center',
-            background: colorBgContainer,
-            borderRadius: borderRadiusLG,
-            minHeight: '85vh',
-          }}
-        >
-          <Content
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '75vh',
-              overflowY: 'auto',
-              marginBottom: '1em',
-            }}
-          >
-            {messages.map((message) => (
-              <Message key={message.id} message={message} />
-            ))}
-          </Content>
-          <MessageInput onSend={onMessageSent} />
-        </Flex>
+        <Tabs
+          defaultActiveKey="1"
+          items={[
+            {
+              key: 'chat',
+              label: 'chat',
+              children: chat,
+            },
+            {
+              key: 'docs',
+              label: 'docs',
+              children: <CollaborativeFileTab />,
+            },
+          ]}
+        />
       </Content>
     </>
   );

@@ -2,7 +2,7 @@ import asyncio
 import copy
 import json
 from typing import Literal, Optional, Union
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from sse_starlette import EventSourceResponse
 from pydantic import BaseModel
 from uuid import uuid4
@@ -11,11 +11,15 @@ from Models.Requests import CreateChannelRequest
 from Models.Exceptions import AlreadyExists, BadParameters, EntityDoesNotExist, InvalidSender
 from utils.helpers import findFromList
 
+from Models.CollaborativeFile import CollaborativeDocument, CreateFileRequest
+
+from utils.WebSocketConnectionManager import WebSocketConnectionManager
 
 class IUser(BaseModel):
     id: Optional[str] = None
     username: str
     isActive: Optional[bool] = False
+
 
 class IMessage(BaseModel):
     id: Optional[str] = None
@@ -34,9 +38,12 @@ class IChannel(BaseModel):
     events: list[IChannelEvent] = []
     
 app = FastAPI()
+manager = WebSocketConnectionManager()
 
-users: list[IUser] = []
-channels: list[IChannel] = []
+baseuser = IUser(id="c3f5452c-370a-4064-a8f3-190d260d0636", username="nick", isActive=False)
+users: list[IUser] = [baseuser]
+channels: list[IChannel] = [IChannel(id="660ee7a5-1a64-42f2-840f-602b00b3655a", name="Channel1", users=[baseuser], messages=[])]
+collaborative_files:dict[str, CollaborativeDocument] = {}
 
 def serialize_message(event: IChannelEvent):
     event_copy = copy.deepcopy(event)
@@ -143,3 +150,34 @@ async def leave_channel(channel_id, leaving_user: IUser):
     channel.events.append(event)
     channel.users = [u for u in channel.users if u.id != user.id]
     return channel
+
+@app.get("/channels/{channel_id}/collaborate")
+async def get_collaborative_files(channel_id):
+    index = next((index for (index, c) in enumerate(channels) if c.id == channel_id), None)
+    if index is None: return "Channel not found", 400
+    files = [value for key, value in collaborative_files.items() if value.channelId == channel_id]
+    return files
+
+@app.post("/channels/{channel_id}/collaborate")
+async def create_collaborative_file(request: CreateFileRequest, channel_id):
+    index = next((index for (index, c) in enumerate(channels) if c.id == channel_id), None)
+    if index is None: return "Channel not found", 400
+    collaborative_doc = CollaborativeDocument(id=str(uuid4()), name=request.name, channelId=channel_id, paragraphs=[], lockedParagraphs=[], edits=[])
+    collaborative_files[collaborative_doc.id] = collaborative_doc
+    return collaborative_doc
+
+@app.websocket("/channels/{channel_id}/collaborate/{file_id}")
+async def collaborative_file(channel_id: str, file_id: str, websocket: WebSocket):
+    await manager.connect(websocket)
+
+    try:
+        if next((channel for channel in channels if getattr(channel, "id") == channel_id), None) == None:
+            print(f"No such channel {channel_id}")
+        if collaborative_files.get(file_id, None) == None:
+            print(f"No such file {file_id}")
+        while True:
+            change = await websocket.receive_json()
+            await manager.send_message(f"Received:{change}",websocket)
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+        await manager.send_message("Bye!!!",websocket)
