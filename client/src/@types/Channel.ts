@@ -20,7 +20,7 @@ export interface IChannelContext {
   currentChannel: IChannel | null;
   setChannel: (channel: IChannel) => void;
   joinChannel: (channel: IChannel) => void;
-  leaveChannel: (channel: IChannel) => void;
+  leaveChannel: () => void;
   userJoinChannel: (user: IUser) => void;
   userLeaveChannel: (user: IUser) => void;
 }

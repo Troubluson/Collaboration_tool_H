@@ -128,3 +128,13 @@ async def join_channel(channel_id, user: IUser):
     channel.events.append(event)
     channel.users.append(user)
     return channel
+
+@app.post("/channels/{channel_id}/leave")
+async def leave_channel(channel_id, user: IUser):
+    channel = findFromList(channels, "id", channel_id)
+    if channel is None:
+        raise EntityDoesNotExist("Channel")
+    event = IChannelEvent(type="user_leave", content=user)
+    channel.events.append(event)
+    channel.users = [u for u in channels if u.id != user.id]
+    return channel
