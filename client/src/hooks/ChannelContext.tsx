@@ -15,6 +15,7 @@ export const ChannelContext = createContext<IChannelContext>({
   setChannel: () => {},
   userJoinChannel: () => {},
   userLeaveChannel: () => {},
+  updateUserStatus: () => {},
 });
 export const useChannel = (): IChannelContext => useContext(ChannelContext);
 
@@ -74,6 +75,14 @@ export const ChannelProvider = ({ children }: Props) => {
     updateChannelUserList(user, 'leave');
   };
 
+  const updateUserStatus = (user: IUser) => {
+    if (!currentChannel) return;
+    const users = [...currentChannel.users];
+    const index = users.findIndex((e) => e.id === user.id);
+    users[index].isActive = user.isActive;
+    setCurrentChannel({ ...currentChannel, users });
+  };
+
   useEffect(() => {
     fetchChannels();
   }, [user?.id]);
@@ -89,6 +98,7 @@ export const ChannelProvider = ({ children }: Props) => {
         setChannel,
         userJoinChannel,
         userLeaveChannel,
+        updateUserStatus,
       }}
     >
       {children}
