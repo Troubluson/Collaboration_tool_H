@@ -44,7 +44,7 @@ const Message = ({ message }: Props) => {
             fontWeight: 'lighter',
           }}
         >
-          {user?.username}
+          {message.sender.username}
         </p>
         <div
           id="message-bubble"
