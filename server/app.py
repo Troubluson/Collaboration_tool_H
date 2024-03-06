@@ -2,10 +2,15 @@ import asyncio
 import copy
 import json
 from typing import Optional
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from sse_starlette import EventSourceResponse
 from pydantic import BaseModel
-import uuid
+from uuid import uuid4
+
+from Models.Requests import CreateChannelRequest
+from Models.Exceptions import AlreadyExists, BadParameters, EntityDoesNotExist, InvalidSender
+from utils.helpers import findFromList
+
 
 class IUser(BaseModel):
     id: Optional[str] = None
@@ -40,13 +45,14 @@ def read_root():
 
 @app.get("/stream/{channel_id}")
 async def event_stream(req: Request, channel_id: str):
-    channel_index = next((index for (index, c) in enumerate(channels) if c.id == channel_id), None)
-    if channel_index is None: return "Channel not found", 400
+    channel = findFromList(channels, 'id', channel_id)
+    if channel is None: 
+        raise EntityDoesNotExist("Channel")
     async def event_publisher():
         messages_seen = 0
         try:
             while True:
-                channel_messages = channels[channel_index].messages
+                channel_messages = channel.messages
                 if messages_seen < len(channel_messages):
                     # Loop new massages
                     for message in channel_messages[messages_seen:]:
@@ -62,26 +68,42 @@ async def event_stream(req: Request, channel_id: str):
 @app.post("/channel/message")
 async def send_message(message: IMessage):
     channelId = message.channelId
-    index = next((index for (index, c) in enumerate(channels) if c.id == channelId), None)
-    if index is None: return "Channel not found", 400
-    message.id = str(uuid.uuid4())
-    channels[index].messages.append(message)
+    channel = findFromList(channels, 'id', channelId)
+    if channel is None: 
+        raise EntityDoesNotExist("Channel")
+    message.id = str(uuid4())
+    channel.messages.append(message)
     return message
 
 @app.post("/login")
-async def login(user: IUser):
-    user.id = str(uuid.uuid4())
-    user.isActive = True
-    users.append(user)
-    return user
+async def login(sentUser: IUser):
+    try: 
+        username = sentUser.username.strip()
+        if username == "" or username is None:
+            raise BadParameters(why="Username cannot be empty")
+        user = IUser(id=str(uuid4()), username=username, isActive=True)
+        users.append(user)
+        return user
+    except:
+        raise HTTPException(500, "An unknown error occured")
 
 @app.get("/channels")
 async def get_channels():
     return channels
 
 @app.post("/channels")
-async def create_channel(channel: IChannel):
-    channel.id = str(uuid.uuid4())
+async def create_channel(request: CreateChannelRequest):
+    base_error = "Channel cannot be created"
+    channel_name = request.name
+    user_id = request.userId
+    user = findFromList(users, "id", user_id)
+
+    if user is None:
+        raise InvalidSender()
+    if any(existingChannel for existingChannel in channels if existingChannel.name == channel_name):
+        raise AlreadyExists(what="Channel")
+    
+    channel = IChannel(id=str(uuid4()), name=channel_name, users=[user])
     channels.append(channel)
     return channel
 
