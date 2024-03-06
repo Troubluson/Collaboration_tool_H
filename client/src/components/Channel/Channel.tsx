@@ -1,4 +1,4 @@
-import { Flex, Layout, Typography, theme } from 'antd';
+import { Flex, Layout, Typography, theme, message } from 'antd';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Message from './Message';
@@ -6,6 +6,9 @@ import MessageInput from './MessageInput';
 import { useChannel } from '../../hooks/ChannelContext';
 import { useUser } from '../../hooks/UserContext';
 import { IMessage } from '../../@types/Message';
+import { IChannelEvent } from '../../@types/Channel';
+import { IUser } from '../../@types/User';
+import { ErrorResponse } from '../../@types/ErrorResponse';
 
 const { Title } = Typography;
 const { Header, Content } = Layout;
@@ -15,30 +18,52 @@ const Channel = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
-  const { currentChannel } = useChannel();
+  const { currentChannel, userJoinChannel, userLeaveChannel } = useChannel();
   const { user } = useUser();
   const [messages, setMessages] = useState<IMessage[]>([]);
-  const [newMessage, setNewMessage] = useState<IMessage | null>(null);
+  const [newEvent, setNewEvent] = useState<IChannelEvent | null>(null);
 
-  const onMessageSent = (message: string) => {
-    if (!currentChannel?.id || !user) return;
-    const newMessage: Partial<IMessage> = {
-      content: message,
-      sender: user,
-      channelId: currentChannel.id,
-    };
-    axios.post<IMessage>(`${serverBaseURL}/channel/message`, newMessage);
+  const onMessageSent = async (messageToSend: string) => {
+    try {
+      if (!currentChannel?.id || !user) return;
+      const newMessage: Partial<IMessage> = {
+        content: messageToSend,
+        sender: user,
+        channelId: currentChannel.id,
+      };
+      await axios.post<IMessage>(`${serverBaseURL}/channel/message`, newMessage);
+    } catch (e) {
+      if (axios.isAxiosError(e) && e.response) {
+        const responseError = e.response?.data?.detail as ErrorResponse;
+        message.error(`${responseError.type}: ${responseError.reason}`);
+      } else {
+        message.error((e as Error).message);
+      }
+    }
   };
 
-  const updateMessages = (message: IMessage) => {
+  const handleChannelEvents = (event: IChannelEvent) => {
     // Temporarily save new incoming messages to separate state to avoid message list resetting
-    setNewMessage(message);
+    setNewEvent(event);
   };
 
   useEffect(() => {
-    if (!newMessage) return;
-    setMessages([...messages, newMessage]);
-  }, [newMessage]);
+    if (!newEvent) return;
+    switch (newEvent.type) {
+      case 'new_message':
+        setMessages([...messages, newEvent.content as IMessage]);
+        break;
+      case 'user_join':
+        userJoinChannel(newEvent.content as IUser);
+        break;
+      case 'user_leave':
+        userLeaveChannel(newEvent.content as IUser);
+        break;
+      default:
+        console.error('Unrecognized event', newEvent);
+        break;
+    }
+  }, [newEvent]);
 
   useEffect(() => {
     setMessages([]);
@@ -47,10 +72,10 @@ const Channel = () => {
     try {
       eventSource = new EventSource(`${serverBaseURL}/stream/${currentChannel.id}`);
       eventSource.onmessage = (e) => {
-        updateMessages(JSON.parse(e.data));
+        handleChannelEvents(JSON.parse(e.data));
       };
 
-      eventSource.onerror = () => {
+      eventSource.onerror = (e) => {
         eventSource?.close();
       };
     } catch (error) {
@@ -60,7 +85,7 @@ const Channel = () => {
     return () => {
       eventSource?.close();
     };
-  }, [currentChannel, currentChannel?.id]);
+  }, [currentChannel?.id]);
 
   if (!currentChannel) {
     return <ChannelHeader />;
