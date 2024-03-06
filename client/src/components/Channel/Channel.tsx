@@ -1,4 +1,4 @@
-import { Flex, Layout, Typography, theme, message } from 'antd';
+import { Flex, Layout, Typography, theme, message, Button } from 'antd';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Message from './Message';
@@ -9,6 +9,7 @@ import { IMessage } from '../../@types/Message';
 import { IChannelEvent } from '../../@types/Channel';
 import { IUser } from '../../@types/User';
 import { ErrorResponse } from '../../@types/ErrorResponse';
+import { ApiOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 const { Header, Content } = Layout;
@@ -135,9 +136,23 @@ const ChannelHeader = ({ channelName }: HeaderProps) => {
   const {
     token: { colorBgContainer },
   } = theme.useToken();
+  const { currentChannel, leaveChannel } = useChannel();
   return (
     <Header style={{ padding: 0, background: colorBgContainer }}>
-      <Title level={2}>{channelName ?? 'Select A Channel From the Sidebar'}</Title>
+      <Flex justify="space-between" align="center" style={{ marginInline: '2rem' }}>
+        <Title level={2}>{channelName ?? 'Select A Channel From the Sidebar'}</Title>
+        {currentChannel && (
+          <Button
+            type="primary"
+            shape="round"
+            icon={<ApiOutlined rev={undefined} />}
+            size="middle"
+            onClick={leaveChannel}
+          >
+            Leave Channel
+          </Button>
+        )}
+      </Flex>
     </Header>
   );
 };

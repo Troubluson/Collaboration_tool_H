@@ -33,9 +33,12 @@ export const ChannelProvider = ({ children }: Props) => {
     setAvailableChannels(availableChannels.filter((ch) => ch.id != channel.id));
   };
 
-  const leaveChannel = (channel: IChannel) => {
-    setAvailableChannels([...availableChannels, channel]);
-    setJoinedChannels(joinedChannels.filter((ch) => ch.id != channel.id));
+  const leaveChannel = async () => {
+    if (!currentChannel) return;
+    axios.post<IChannel>(`${serverBaseURL}/channels/${currentChannel.id}/leave`, user);
+    setAvailableChannels([...availableChannels, currentChannel]);
+    setJoinedChannels(joinedChannels.filter((ch) => ch.id != currentChannel.id));
+    setCurrentChannel(null);
   };
 
   const setChannel = (channel: IChannel) => setCurrentChannel({ ...channel, users: [] });
