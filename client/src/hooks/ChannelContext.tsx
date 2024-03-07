@@ -79,6 +79,7 @@ export const ChannelProvider = ({ children }: Props) => {
     if (!currentChannel) return;
     const users = [...currentChannel.users];
     const index = users.findIndex((e) => e.id === user.id);
+    if (index === -1) return; // User no longer part of channel
     users[index].isActive = user.isActive;
     setCurrentChannel({ ...currentChannel, users });
   };

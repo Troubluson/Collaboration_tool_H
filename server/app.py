@@ -39,12 +39,8 @@ users: list[IUser] = []
 channels: list[IChannel] = []
 
 def serialize_message(event: IChannelEvent):
-    event_copy = copy.copy(event)
-    content_copy = copy.copy(event.content)
-    if isinstance(content_copy, IMessage):
-        content_copy.sender = content_copy.sender.__dict__
-    event_copy.content = content_copy.__dict__
-    return event_copy.__dict__
+    event_copy = copy.deepcopy(event)
+    return event_copy.json()
 
 @app.get("/")
 def read_root():
@@ -68,7 +64,7 @@ async def event_stream(req: Request, channel_id: str, user_id: str):
                 if events_seen < len(channel_events):
                     # Loop new massages
                     for event in channel_events[events_seen:]:
-                        yield json.dumps(serialize_message(event))
+                        yield serialize_message(event)
                     events_seen = len(channel_events)
                 await asyncio.sleep(0.1)
         except asyncio.CancelledError as e:
@@ -136,11 +132,14 @@ async def join_channel(channel_id, user: IUser):
     return channel
 
 @app.post("/channels/{channel_id}/leave")
-async def leave_channel(channel_id, user: IUser):
+async def leave_channel(channel_id, leaving_user: IUser):
+    user = findFromList(users, "id", leaving_user.id)
+    if user is None:
+        raise EntityDoesNotExist("User")
     channel = findFromList(channels, "id", channel_id)
     if channel is None:
         raise EntityDoesNotExist("Channel")
     event = IChannelEvent(type="user_leave", content=user)
     channel.events.append(event)
-    channel.users = [u for u in channels if u.id != user.id]
+    channel.users = [u for u in channel.users if u.id != user.id]
     return channel
