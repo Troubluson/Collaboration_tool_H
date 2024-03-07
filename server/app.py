@@ -9,9 +9,11 @@ from uuid import uuid4
 
 from Models.Requests import CreateChannelRequest
 from Models.Exceptions import AlreadyExists, BadParameters, EntityDoesNotExist, InvalidSender
+from Models.Events import ChangeData, ChangeEvent, SyncData, SyncEvent
+from utils.OT_Transformer import OperationalTransform, TextOperation
 from utils.helpers import findFromList
 
-from Models.CollaborativeFile import CollaborativeDocument, CreateFileRequest
+from Models.CollaborativeFile import CollaborativeDocument, CreateFileRequest, IWebSocketMessage, Operation, OperationEvent
 
 from utils.WebSocketConnectionManager import WebSocketConnectionManager
 
@@ -43,7 +45,9 @@ manager = WebSocketConnectionManager()
 baseuser = IUser(id="c3f5452c-370a-4064-a8f3-190d260d0636", username="nick", isActive=False)
 users: list[IUser] = [baseuser]
 channels: list[IChannel] = [IChannel(id="660ee7a5-1a64-42f2-840f-602b00b3655a", name="Channel1", users=[baseuser], messages=[])]
-collaborative_files:dict[str, CollaborativeDocument] = {}
+collaborative_files:dict[str, CollaborativeDocument] = {
+    "660ee7a5-1a64-42f2-840f-602b00b3655a": CollaborativeDocument(id="660ee7a5-1a64-42f2-840f-602b00b3655a", channelId="660ee7a5-1a64-42f2-840f-602b00b3655a", name="file", content="", operations=[])
+    }
 
 def serialize_message(event: IChannelEvent):
     event_copy = copy.deepcopy(event)
@@ -162,22 +166,47 @@ async def get_collaborative_files(channel_id):
 async def create_collaborative_file(request: CreateFileRequest, channel_id):
     index = next((index for (index, c) in enumerate(channels) if c.id == channel_id), None)
     if index is None: return "Channel not found", 400
-    collaborative_doc = CollaborativeDocument(id=str(uuid4()), name=request.name, channelId=channel_id, paragraphs=[], lockedParagraphs=[], edits=[])
+    collaborative_doc = CollaborativeDocument(id=str(uuid4()), name=request.name, channelId=channel_id, content="", operations=[])
     collaborative_files[collaborative_doc.id] = collaborative_doc
     return collaborative_doc
 
 @app.websocket("/channels/{channel_id}/collaborate/{file_id}")
 async def collaborative_file(channel_id: str, file_id: str, websocket: WebSocket):
     await manager.connect(websocket)
-
     try:
         if next((channel for channel in channels if getattr(channel, "id") == channel_id), None) == None:
             print(f"No such channel {channel_id}")
-        if collaborative_files.get(file_id, None) == None:
+        file = collaborative_files.get(file_id, None)
+        if file == None:
             print(f"No such file {file_id}")
+            raise WebSocketDisconnect
         while True:
-            change = await websocket.receive_json()
-            await manager.send_message(f"Received:{change}",websocket)
+            message: IWebSocketMessage = await websocket.receive_json()
+            if message["event"] == "Edit":
+                new_operation = OperationEvent(**message['data'])
+                last_op_by_user = next((index for (index, op) in enumerate(reversed(file.operations)) if op.userId == new_operation.userId), None)
+                # Note reversed, so essentially >= last_op_by_user >= revision
+                if last_op_by_user and last_op_by_user < new_operation.revision:
+                    print("something happened")
+                
+                new_text_op = TextOperation()
+                new_text_op.add(Operation(**new_operation.model_dump()))
+                concurrent_operations = file.operations[new_operation.revision:]
+                other_operations = TextOperation()
+                for operation in concurrent_operations:
+                    other_operations.add(operation)
+                
+                new_text_op.transform(other_operations)
+                
+                file.operations.extend(new_text_op.ops)
+                file.content = new_text_op.apply(file.content)
+                print(file.content)
+
+                change_to_broadcast = ChangeEvent(data=ChangeData(operation=new_text_op.ops[0], revision=len(file.operations)))
+                await manager.broadcast(change_to_broadcast.model_dump_json())
+            if message["event"] == "sync_document":
+                print("syncing")
+                await manager.send_json_message(SyncEvent(data=SyncData(content=file.content, revision=len(file.operations))).model_dump_json(), websocket)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.send_message("Bye!!!",websocket)

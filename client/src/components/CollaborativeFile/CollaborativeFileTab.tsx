@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useChannel } from '../../hooks/ChannelContext';
-import { ICollaborativeFile } from '../../@types/CollaborativeFIle';
+import { ICollaborativeFile } from '../../@types/CollaborativeFile';
 import { Button, Flex, Input, Modal, Typography } from 'antd';
 import CollaborativeFile from './CollaborativeFile';
 

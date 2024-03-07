@@ -3,28 +3,37 @@ from typing import List, Optional
 from pydantic import BaseModel
 from enum import Enum
 
+
+class IWebSocketMessage(BaseModel):
+    event: str
+    data: dict
+
+
 class CreateFileRequest(BaseModel):
     name: str
-    
-class EditType(Enum):
-    ADD = 0
-    DELETE = 1
 
-class DocumentEdit(BaseModel):
-    id: Optional[str] = None,
+
+class Operation(BaseModel):
     userId: str
-    type: EditType
-    timeStamp: datetime
-    startIndex: int
-    content: str
+    type: str
+    index: int
+    text: str
+
+class OperationEvent(BaseModel):
+    userId: str
+    type: str
+    index: int
+    text: str
+    revision: int
+    def to_op(self) -> Operation:
+        return Operation.model_construct(self)
 
 class CollaborativeDocument(BaseModel):
     id: Optional[str] = None
     channelId: str
     name: str
-    paragraphs: List[str]
-    lockedParagraphs: List[int]
-    edits: List[DocumentEdit]
+    content: str
+    operations: List[Operation]
 
 
 
