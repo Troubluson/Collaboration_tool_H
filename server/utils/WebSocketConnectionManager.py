@@ -24,6 +24,11 @@ class WebSocketConnectionManager:
     async def broadcast(self, message: str):
         for connection in self.active_connections:
             await connection.send_json(message)
+
+    async def broadcast_others(self, message: dict, sourceSocket: WebSocket):
+        for connection in self.active_connections:
+            if connection != sourceSocket:
+                await connection.send_json(json.dumps(message))
     
     def disconnect(self, websocket: WebSocket):
         """disconnect event"""
