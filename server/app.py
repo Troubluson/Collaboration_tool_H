@@ -8,7 +8,7 @@ from Routers.CollaborativeDocument import collaborate_router
 
 from Models.Requests import CreateChannelRequest
 from Models.Exceptions import AlreadyExists, BadParameters, EntityDoesNotExist, InvalidSender
-from Models.Entities import IChannelEvent, IMessage
+from Models.Entities import IChannelEvent, IMessage, LatencyThroughputData
 from utils.helpers import findFromList
 
 app = FastAPI()
@@ -131,3 +131,14 @@ async def leave_channel(channel_id, leaving_user: IUser):
     channel.users = [u for u in channel.users if u.id != user.id]
     return channel
 
+@app.post("/data")
+async def receive_data(data: LatencyThroughputData):
+    # You now have the latency and throughput data and can do whatever you want with it
+    print(f"Received data: {data}")
+    # For example, you could store it in a database here
+
+    return {"message": "Data received successfully"}
+
+@app.get("/data")
+async def get_test():
+    return {"message":"GET request received"}
