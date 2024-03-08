@@ -7,12 +7,11 @@ import Channel from './components/Channel/Channel';
 import { ChannelProvider } from './hooks/ChannelContext';
 import { UserProvider } from './hooks/UserContext';
 import UserList from './components/Userlist/Userlist';
-import axios from 'axios';
 
 async function testLatencyAndThroughput(): Promise<void> {
   try {
     const startTime: number = new Date().getTime();
-    const response: Response = await axios.get('http://localhost:8000/data');
+    const response: Response = await fetch('http://localhost:8000/data');
     const endTime: number = new Date().getTime();
 
     if (!response.ok) {
@@ -28,9 +27,17 @@ async function testLatencyAndThroughput(): Promise<void> {
 
     // Post the result to the server
     const result: { latency: number; throughput: number } = { latency, throughput };
-    await axios.post('http://localhost:8000/data', {
-      result
+    await fetch('http://localhost:8000/data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(result),
     });
+
+    if (!response.ok) {
+      throw new Error('HTTP error! status : ${postResponse.status}');
+    }
   } catch (error) {
     console.error('There was an error with the fetch operation: ', error);
   }
