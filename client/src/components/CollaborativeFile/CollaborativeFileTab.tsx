@@ -43,6 +43,10 @@ const CollaborativeFileTab = () => {
       setIsModalOpen(false);
     }
   };
+  useEffect(() => {
+    setFiles([]);
+    setOpenFile(null);
+  }, [currentChannel]);
 
   return (
     <>

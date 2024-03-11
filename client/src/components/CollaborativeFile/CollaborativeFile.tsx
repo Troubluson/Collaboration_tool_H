@@ -3,8 +3,8 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useChannel } from '../../hooks/ChannelContext';
 import {
   IChangeMessage,
+  IDocumentMessage,
   IEditMessage,
-  ISyncMessage,
   IWebSocketMessage,
   Operation,
 } from '../../@types/CollaborativeFile';
@@ -36,8 +36,10 @@ const CollaborativeFile = ({ documentId }: Props) => {
   useEffect(() => {
     if (lastJsonMessage) {
       const message: IWebSocketMessage = JSON.parse(lastJsonMessage);
-      if (message.event === 'sync_document') {
-        const syncMessage = message as ISyncMessage;
+      console.log(message);
+      if (message.event === 'document') {
+        console.log('here');
+        const syncMessage = message as IDocumentMessage;
         setCurrentContent(syncMessage.data.content);
         setRevision(syncMessage.data.revision);
       }

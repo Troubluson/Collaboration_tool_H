@@ -28,8 +28,8 @@ export interface IChangeMessage extends IWebSocketMessage {
     }
 }
 
-export interface ISyncMessage extends IWebSocketMessage {
-    event: 'sync_document',
+export interface IDocumentMessage extends IWebSocketMessage {
+    event: 'document',
     data: {
         revision: number,
         content: string
