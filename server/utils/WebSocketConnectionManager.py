@@ -19,7 +19,7 @@ class WebSocketConnectionManager:
 
     async def send_json_message(self, message: str, websocket: WebSocket):
         """Direct Message"""
-        await websocket.send_json(json.dumps(message))
+        await websocket.send_json(message)
 
     async def broadcast(self, message: str):
         for connection in self.active_connections:

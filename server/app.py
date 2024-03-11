@@ -10,7 +10,7 @@ from uuid import uuid4
 from Models.Requests import CreateChannelRequest
 from Models.Exceptions import AlreadyExists, BadParameters, EntityDoesNotExist, InvalidSender
 from Models.Events import ChangeData, ChangeEvent, SyncData, SyncEvent
-from utils.OT_Transformer import OperationalTransform, TextOperation
+from utils.OT_Transformer import TextOperation
 from utils.helpers import findFromList
 
 from Models.CollaborativeFile import CollaborativeDocument, CreateFileRequest, IWebSocketMessage, Operation, OperationEvent
@@ -206,7 +206,8 @@ async def collaborative_file(channel_id: str, file_id: str, websocket: WebSocket
                 await manager.broadcast(change_to_broadcast.model_dump_json())
             if message["event"] == "sync_document":
                 print("syncing")
-                await manager.send_json_message(SyncEvent(data=SyncData(content=file.content, revision=len(file.operations))).model_dump_json(), websocket)
+                sync_event = SyncEvent(data=SyncData(content=file.content, revision=len(file.operations)))
+                await manager.send_json_message(sync_event.model_dump_json(), websocket)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.send_message("Bye!!!",websocket)
