@@ -21,26 +21,25 @@ const CollaborativeFile = ({ documentId }: Props) => {
   const [currentContent, setCurrentContent] = useState<string>('');
   const [revision, setRevision] = useState(0);
   const [locked, setLocked] = useState<boolean>(false);
+  const [cursorPosition, setCursorPosition] = useState(0);
   const { currentChannel } = useChannel();
   const { user } = useUser();
   const textareaRef = useRef<null | TextAreaRef>(null);
 
-  const { sendJsonMessage, lastJsonMessage, readyState, getWebSocket } = useWebSocket(
+  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
     `ws://localhost:8000/channels/${currentChannel?.id}/collaborate/${documentId}`,
     {
       onOpen: () => console.log('websocket opened'),
       shouldReconnect: (closeEvent) => false,
     },
   );
-
   useEffect(() => {
     if (lastJsonMessage) {
       const message: IWebSocketMessage = JSON.parse(lastJsonMessage);
-      console.log(message);
       if (message.event === 'document') {
-        console.log('here');
         const syncMessage = message as IDocumentMessage;
         setCurrentContent(syncMessage.data.content);
+        setOriginalContent(syncMessage.data.content);
         setRevision(syncMessage.data.revision);
       }
       if (message.event === 'change') {
@@ -64,36 +63,32 @@ const CollaborativeFile = ({ documentId }: Props) => {
   }, [readyState]);
 
   const handleChange = (operation: Operation) => {
-    const cursorPos =
-      textareaRef.current?.resizableTextArea?.textArea.selectionStart ?? 0;
+    let text = originalContent;
+    let cursorPos = cursorPosition;
     if (operation.type === 'insert') {
-      const newContent = currentContent;
-      const firstSlice = newContent.slice(0, operation.index) + operation.text;
-      const secondSlice = newContent.slice(operation.index + 1);
-      const newCursorPos =
-        cursorPos + (operation.index < cursorPos ? operation.text.length : 0);
-      textareaRef.current?.resizableTextArea?.textArea.setSelectionRange(
-        newCursorPos,
-        newCursorPos,
-      );
-
-      setCurrentContent(firstSlice + secondSlice);
+      const firstSlice = originalContent.slice(0, operation.index) + operation.text;
+      const secondSlice = originalContent.slice(operation.index);
+      text = firstSlice + secondSlice;
+      cursorPos = cursorPos + operation.text.length;
     } else if (operation.type === 'delete') {
-      const newContent = currentContent;
-      console.log(operation);
-      const firstSlice = newContent.slice(0, operation.index + 1);
-      const secondSlice = newContent.slice(operation.index + operation.text.length);
-      console.log(firstSlice + secondSlice);
-      const newCursorPos =
-        cursorPos - (operation.index < cursorPos ? operation.text.length : 0);
-
-      textareaRef.current?.resizableTextArea?.textArea.setSelectionRange(
-        newCursorPos,
-        newCursorPos,
-      );
-      setCurrentContent(firstSlice + secondSlice);
+      const firstSlice = originalContent.slice(0, operation.index);
+      const secondSlice = originalContent.slice(operation.index + operation.text.length);
+      text = firstSlice + secondSlice;
+      cursorPos = cursorPos - (operation.index < cursorPos ? operation.text.length : 0);
     }
+    setCursorPosition(cursorPos);
+    setCurrentContent(text);
+    setOriginalContent(text);
   };
+
+  useEffect(() => {
+    //if (!isTypingRef.current) {
+    const textArea = textareaRef.current?.resizableTextArea?.textArea;
+    console.log(cursorPosition);
+    textArea?.focus();
+    textArea?.setSelectionRange(cursorPosition, cursorPosition);
+    //}
+  }, [cursorPosition, currentContent, textareaRef]);
 
   const connectionStatus = {
     [ReadyState.CONNECTING]: 'Connecting',
@@ -121,13 +116,11 @@ const CollaborativeFile = ({ documentId }: Props) => {
     }
 
     const stringToTakeChangeFrom = changeLength > 0 ? newContent : currentContent;
-    console.log(changeStart, changeStart + absChangeLen);
     const change = stringToTakeChangeFrom.substring(
       changeStart,
       changeStart + absChangeLen,
     );
 
-    setCurrentContent(newContent);
     const message = {
       event: 'Edit',
       data: {
@@ -150,6 +143,12 @@ const CollaborativeFile = ({ documentId }: Props) => {
         value={currentContent}
         onChange={handleInputChange}
         ref={textareaRef}
+        onKeyUp={() =>
+          setCursorPosition(
+            textareaRef.current?.resizableTextArea?.textArea.selectionStart ??
+              cursorPosition,
+          )
+        }
       ></TextArea>
     </div>
   );
