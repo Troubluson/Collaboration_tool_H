@@ -26,7 +26,6 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
   const [originalContent, setOriginalContent] = useState<string>('');
   const [currentContent, setCurrentContent] = useState<string>('');
   const [revision, setRevision] = useState(0);
-  const [locked, setLocked] = useState<boolean>(false);
   const [cursorPosition, setCursorPosition] = useState(0);
   const { currentChannel } = useChannel();
   const { user } = useUser();
@@ -66,7 +65,6 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
     if (readyState === ReadyState.OPEN) {
       setRevision(0);
       setCurrentContent('');
-      console.log('sync');
       sendJsonMessage({
         event: 'sync_document',
         data: {},
@@ -96,19 +94,9 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
   useEffect(() => {
     //if (!isTypingRef.current) {
     const textArea = textareaRef.current?.resizableTextArea?.textArea;
-    console.log(cursorPosition);
-    textArea?.focus();
     textArea?.setSelectionRange(cursorPosition, cursorPosition);
     //}
-  }, [cursorPosition, currentContent, textareaRef]);
-
-  const connectionStatus = {
-    [ReadyState.CONNECTING]: 'Connecting',
-    [ReadyState.OPEN]: 'Open',
-    [ReadyState.CLOSING]: 'Closing',
-    [ReadyState.CLOSED]: 'Closed',
-    [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
-  }[readyState];
+  }, [cursorPosition]);
 
   const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>): void => {
     if (!textareaRef.current?.resizableTextArea) {
@@ -188,6 +176,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
         rows={10}
         cols={50}
         value={currentContent}
+        disabled={readyState !== ReadyState.OPEN}
         onChange={handleInputChange}
         ref={textareaRef}
         onKeyUp={() =>

@@ -63,7 +63,7 @@ async def collaborative_file(channel_id: str, document_id: str, websocket: WebSo
             if message["event"] == "Edit":
                 await handleEditEvent(message, document)
             if message["event"] == "sync_document":
-                handleSyncEvent(message, document, websocket)
+                await handleSyncEvent(message, document, websocket)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.send_message("Bye!!!", websocket)
@@ -81,7 +81,7 @@ async def handleEditEvent(message: IWebSocketMessage, document: ICollaborativeDo
     document.operations.append(new_op)
 
     change_to_broadcast = ChangeEvent(data=ChangeData(operation=new_op, revision=len(document.operations)))
-    print(change_to_broadcast)
+
     await manager.broadcast(change_to_broadcast.model_dump_json())
 
 async def handleSyncEvent(message: IWebSocketMessage, document: ICollaborativeDocument, websocket: WebSocket):
