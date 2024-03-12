@@ -1,4 +1,4 @@
-import { Form, Input, Button, theme } from 'antd';
+import { Form, Input, Button, theme, message } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { Content } from 'antd/es/layout/layout';
 import axios from 'axios';
@@ -13,7 +13,7 @@ const Login = () => {
     token: { colorBgContainer, borderRadiusLG, paddingLG },
   } = theme.useToken();
 
-  const { setUser } = useUser();
+  const { setUser, logout } = useUser();
 
   const onFinish = async ({ username }: Partial<IUser>) => {
     const { data } = await axios.post<IUser>(`${serverBaseURL}/login`, { username });
@@ -28,7 +28,13 @@ const Login = () => {
         ...JSON.parse(savedUser),
         isActive: true,
       };
-      setUser(user);
+      axios
+        .post<IUser>(`${serverBaseURL}/login_existing`, user)
+        .then(() => setUser(user))
+        .catch(() => {
+          message.error(`Could not log ${user.username} in automically`);
+          logout();
+        });
     }
   }, []);
 
