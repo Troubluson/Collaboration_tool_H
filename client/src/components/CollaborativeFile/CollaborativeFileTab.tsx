@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useChannel } from '../../hooks/ChannelContext';
 import { ICollaborativeFile } from '../../@types/CollaborativeFile';
-import { Button, Flex, Input, Modal, Typography } from 'antd';
+import { Button, Flex, Input, Modal, Typography, message } from 'antd';
 import CollaborativeFile from './CollaborativeFile';
 import { IChannelEvent } from '../../@types/Channel';
 
@@ -55,11 +55,12 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
   useEffect(() => {
     switch (documentEvent?.type) {
       case 'document_deleted':
-        setFiles(
-          files.filter(
-            (file) => file.id !== (documentEvent.content as ICollaborativeFile).id,
-          ),
-        );
+        const documentId = (documentEvent.content as ICollaborativeFile).id;
+        setFiles(files.filter((file) => file.id !== documentId));
+        if (openFile === documentId) {
+          setOpenFile(null);
+          message.warning(`File was deleted`);
+        }
         break;
       case 'document_created':
         setFiles([...files, documentEvent.content as ICollaborativeFile]);
