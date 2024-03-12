@@ -10,7 +10,7 @@ from uuid import uuid4
 from Models.Requests import CreateChannelRequest
 from Models.Exceptions import AlreadyExists, BadParameters, EntityDoesNotExist, InvalidSender
 from Models.Events import ChangeData, ChangeEvent, SyncData, SyncEvent
-from utils.OT_Transformer import TextOperation
+from utils.OperationalTransform import OperationalTransform, TextOperation
 from utils.helpers import findFromList
 
 from Models.CollaborativeFile import CollaborativeDocument, CreateFileRequest, IWebSocketMessage, Operation, OperationEvent
@@ -183,26 +183,19 @@ async def collaborative_file(channel_id: str, file_id: str, websocket: WebSocket
         while True:
             message: IWebSocketMessage = await websocket.receive_json()
             if message["event"] == "Edit":
-                new_operation = OperationEvent(**message['data'])
-                last_op_by_user = next((index for (index, op) in enumerate(reversed(file.operations)) if op.userId == new_operation.userId), None)
-                # Note reversed, so essentially >= last_op_by_user >= revision
-                if last_op_by_user and last_op_by_user < new_operation.revision:
-                    print("something happened")
+                new_operation_event = OperationEvent(**message['data'])
                 
-                new_text_op = TextOperation()
-                new_text_op.add(Operation(**new_operation.model_dump()))
-                concurrent_operations = file.operations[new_operation.revision:]
-                other_operations = TextOperation()
-                for operation in concurrent_operations:
-                    other_operations.add(operation)
-                
-                new_text_op.transform(other_operations)
-                
-                file.operations.extend(new_text_op.ops)
+                new_text_op = TextOperation(new_operation_event.type, new_operation_event.index, new_operation_event.text)
+                # revision is the version the client thinks they are editing
+                concurrent_operations = file.operations[new_operation_event.revision:]
+                new_text_op = OperationalTransform.apply_concurrent_operations(new_text_op, concurrent_operations)
+                new_op = new_text_op.toOperation(new_operation_event.userId)
                 file.content = new_text_op.apply(file.content)
+                file.operations.append(new_op)
                 print(file.content)
 
-                change_to_broadcast = ChangeEvent(data=ChangeData(operation=new_text_op.ops[0], revision=len(file.operations)))
+                change_to_broadcast = ChangeEvent(data=ChangeData(operation=new_op, revision=len(file.operations)))
+                print(change_to_broadcast)
                 await manager.broadcast(change_to_broadcast.model_dump_json())
             if message["event"] == "sync_document":
                 print("syncing")

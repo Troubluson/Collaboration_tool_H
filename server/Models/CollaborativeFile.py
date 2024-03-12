@@ -18,6 +18,13 @@ class Operation(BaseModel):
     type: str
     index: int
     text: str
+    def apply(self, doc):
+        if self.type == 'insert':
+            return doc[:self.position] + self.text + doc[self.position:]
+        elif self.type == 'delete':
+            return doc[:self.position] + doc[self.position + len(self.text):]
+        else:
+            raise ValueError("Invalid operation type")
 
 class OperationEvent(BaseModel):
     userId: str
