@@ -11,12 +11,15 @@ import {
 import _ from 'lodash';
 import TextArea, { TextAreaRef } from 'antd/es/input/TextArea';
 import { useUser } from '../../hooks/UserContext';
+import { Button } from 'antd';
 
 interface Props {
   documentId: string | null;
+  documentName: string;
+  onClose: () => void;
 }
 
-const CollaborativeFile = ({ documentId }: Props) => {
+const CollaborativeFile = ({ documentId, documentName, onClose }: Props) => {
   const [originalContent, setOriginalContent] = useState<string>('');
   const [currentContent, setCurrentContent] = useState<string>('');
   const [revision, setRevision] = useState(0);
@@ -136,7 +139,11 @@ const CollaborativeFile = ({ documentId }: Props) => {
 
   return (
     <div>
-      <h1>Collaborative Text Document</h1>
+      <div>
+        <h1>
+          {documentName} <Button onClick={onClose}>Close</Button>
+        </h1>
+      </div>
       <TextArea
         rows={10}
         cols={50}
