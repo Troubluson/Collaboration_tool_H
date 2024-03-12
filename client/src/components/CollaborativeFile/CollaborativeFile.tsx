@@ -122,7 +122,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
     );
 
     const message = {
-      event: 'Edit',
+      event: 'edit',
       data: {
         type: isInsert ? 'insert' : 'delete',
         index: changeStart,

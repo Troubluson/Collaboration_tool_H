@@ -16,7 +16,7 @@ export interface Operation {
     revision?: number
 }
 export interface IEditMessage extends IWebSocketMessage {
-    event: 'Edit',
+    event: 'edit',
     data: Operation
 }
 
@@ -41,7 +41,4 @@ export interface ICollaborativeFile {
     channelId: string,
     name: string,
     content: string
-    //paragraphs: string[]
-    //lockedParagraphs: number[]
-    //edits: string[] //placeholder type
 }

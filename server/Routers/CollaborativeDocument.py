@@ -60,10 +60,13 @@ async def collaborative_file(channel_id: str, document_id: str, websocket: WebSo
             raise WebSocketDisconnect
         while True:
             message: IWebSocketMessage = await websocket.receive_json()
-            if message["event"] == "Edit":
-                await handleEditEvent(message, document)
-            if message["event"] == "sync_document":
-                await handleSyncEvent(message, document, websocket)
+            match message["event"]:
+                case "edit":
+                    await handleEditEvent(message, document)
+                case "sync_document":
+                    await handleSyncEvent(message, document, websocket)
+                case _:
+                    print("Noop")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.send_message("Bye!!!", websocket)
