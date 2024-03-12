@@ -1,11 +1,12 @@
 
 from typing import Optional
 from pydantic import BaseModel
-from Models.CollaborativeFile import Operation
+
+from Models.Entities import IOperation
 
 class ChangeData(BaseModel):
     revision: int
-    operation: Operation 
+    operation: IOperation 
 
 class ChangeEvent(BaseModel):
     event: Optional[str] = "change"
@@ -18,6 +19,16 @@ class SyncData(BaseModel):
 class SyncEvent(BaseModel):
     event: Optional[str] = "document"
     data: SyncData
+
+class OperationEvent(BaseModel):
+    userId: str
+    type: str
+    index: int
+    text: str
+    revision: int
+    def to_op(self) -> IOperation:
+        return IOperation.model_construct(self)
+
 
 
 

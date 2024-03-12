@@ -7,3 +7,10 @@ class CreateChannelRequest(BaseModel):
     userId: str
     name: str
 
+
+class CreateFileRequest(BaseModel):
+    name: str
+
+
+
+
