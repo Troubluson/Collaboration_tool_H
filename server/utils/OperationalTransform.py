@@ -1,7 +1,7 @@
 
 from typing import List
 
-from Models.CollaborativeFile import Operation
+from Models.Entities import IOperation
 
 class TextOperation:
     def __init__(self, type, index, text=""):
@@ -10,7 +10,7 @@ class TextOperation:
         self.text = text  # text to be inserted or deleted
 
     def toOperation(self, userId: str):
-        return Operation(userId=userId, index=self.index, text=self.text, type=self.type)
+        return IOperation(userId=userId, index=self.index, text=self.text, type=self.type)
         
     def apply(self, doc):
         if self.type == 'insert':
@@ -58,7 +58,7 @@ class OperationalTransform:
             return operation1, operation2
 
     @staticmethod
-    def apply_concurrent_operations(operation: TextOperation, concurrent_operations: List[Operation]):
+    def apply_concurrent_operations(operation: TextOperation, concurrent_operations: List[IOperation]):
         for op in concurrent_operations:
             concurrent_op = TextOperation(op.type, op.index, op.text)
             (operation, _) = OperationalTransform.transform(operation, concurrent_op)
