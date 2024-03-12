@@ -50,21 +50,31 @@ const CollaborativeFileTab = () => {
 
   return (
     <>
-      {files.length ? (
-        <Flex>
-          {files.map((file) => (
-            <Button key={file.id} onClick={() => setOpenFile(file.id)}>
-              {file.name}
-            </Button>
-          ))}
-        </Flex>
-      ) : (
-        <Typography>No files created yet for this channel</Typography>
+      {!openFile && (
+        <>
+          {files.length ? (
+            <Flex>
+              {files.map((file) => (
+                <Button key={file.id} onClick={() => setOpenFile(file.id)}>
+                  {file.name}
+                </Button>
+              ))}
+            </Flex>
+          ) : (
+            <Typography>No files created yet for this channel</Typography>
+          )}
+          <Button onClick={() => setIsModalOpen(true)}>Create new file</Button>
+        </>
       )}
-      <Button onClick={() => setIsModalOpen(true)}>Create new file</Button>
-      {openFile && <CollaborativeFile documentId={openFile} />}
+      {openFile && (
+        <CollaborativeFile
+          documentId={openFile}
+          documentName={files.find((file) => file.id === openFile)?.name ?? ''}
+          onClose={() => setOpenFile(null)}
+        />
+      )}
       <Modal
-        title="Create Channel"
+        title="Create Document"
         open={isModalOpen}
         okButtonProps={{ disabled: !newFileName }}
         onOk={createNewFile}
