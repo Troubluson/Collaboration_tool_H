@@ -11,15 +11,18 @@ import {
 import _ from 'lodash';
 import TextArea, { TextAreaRef } from 'antd/es/input/TextArea';
 import { useUser } from '../../hooks/UserContext';
-import { Button } from 'antd';
+import { Button, Flex, Popconfirm } from 'antd';
+import { CloseOutlined, DeleteOutlined } from '@ant-design/icons';
+import axios from 'axios';
 
 interface Props {
   documentId: string | null;
   documentName: string;
   onClose: () => void;
+  onDelete: () => void;
 }
 
-const CollaborativeFile = ({ documentId, documentName, onClose }: Props) => {
+const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Props) => {
   const [originalContent, setOriginalContent] = useState<string>('');
   const [currentContent, setCurrentContent] = useState<string>('');
   const [revision, setRevision] = useState(0);
@@ -28,14 +31,20 @@ const CollaborativeFile = ({ documentId, documentName, onClose }: Props) => {
   const { currentChannel } = useChannel();
   const { user } = useUser();
   const textareaRef = useRef<null | TextAreaRef>(null);
+  const baseUrl = `localhost:8000/channels/${currentChannel?.id}/collaborate/${documentId}`;
 
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    `ws://localhost:8000/channels/${currentChannel?.id}/collaborate/${documentId}`,
+    `ws://${baseUrl}`,
     {
       onOpen: () => console.log('websocket opened'),
       shouldReconnect: (closeEvent) => false,
     },
   );
+
+  const deleteDocument = () => {
+    axios.delete(`http://${baseUrl}`).then(onDelete).catch(console.error); //Todo better error handling
+  };
+
   useEffect(() => {
     if (lastJsonMessage) {
       const message: IWebSocketMessage = JSON.parse(lastJsonMessage);
@@ -140,9 +149,40 @@ const CollaborativeFile = ({ documentId, documentName, onClose }: Props) => {
   return (
     <div>
       <div>
-        <h1>
-          {documentName} <Button onClick={onClose}>Close</Button>
-        </h1>
+        <Flex justify="space-between" align="center" style={{ marginInline: '2rem' }}>
+          <h1>{documentName}</h1>
+
+          {currentChannel && (
+            <div>
+              <Button
+                type="primary"
+                shape="default"
+                icon={<CloseOutlined rev={undefined} />}
+                size="middle"
+                onClick={onClose}
+              >
+                Close
+              </Button>
+              <Popconfirm
+                title={`delete ${documentName}?`}
+                description={
+                  'are you sure you want to delete the document? This operation cannot be reversed'
+                }
+                onConfirm={deleteDocument}
+              >
+                <Button
+                  type="primary"
+                  shape="default"
+                  icon={<DeleteOutlined rev={undefined} />}
+                  danger
+                  size="middle"
+                >
+                  Delete
+                </Button>
+              </Popconfirm>
+            </div>
+          )}
+        </Flex>
       </div>
       <TextArea
         rows={10}

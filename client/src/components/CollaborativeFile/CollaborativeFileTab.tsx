@@ -71,6 +71,9 @@ const CollaborativeFileTab = () => {
           documentId={openFile}
           documentName={files.find((file) => file.id === openFile)?.name ?? ''}
           onClose={() => setOpenFile(null)}
+          onDelete={() => {
+            /*todo*/
+          }}
         />
       )}
       <Modal
