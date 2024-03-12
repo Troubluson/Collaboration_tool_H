@@ -74,6 +74,17 @@ async def login(sentUser: IUser):
         return user
     except:
         raise HTTPException(500, "An unknown error occured")
+    
+@app.post("/login_existing")
+async def login(sentUser: IUser):
+    try: 
+        existing_user = findFromList(users, "id", sentUser.id)
+        if not existing_user:
+            users.append(sentUser)
+        print(users)
+        return sentUser
+    except:
+        raise HTTPException(500, "An unknown error occured")
 
 @app.get("/channels")
 async def get_channels():
