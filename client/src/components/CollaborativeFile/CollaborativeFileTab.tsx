@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useChannel } from '../../hooks/ChannelContext';
 import { ICollaborativeFile } from '../../@types/CollaborativeFile';
-import { Button, Flex, Input, Modal, Typography, message } from 'antd';
+import { Button, Flex, Input, Modal, Space, Typography, message } from 'antd';
 import CollaborativeFile from './CollaborativeFile';
 import { IChannelEvent } from '../../@types/Channel';
 
@@ -76,16 +76,24 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
         <>
           {files.length ? (
             <Flex>
-              {files.map((file) => (
-                <Button key={file.id} onClick={() => setOpenFile(file.id)}>
-                  {file.name}
-                </Button>
-              ))}
+              <Space>
+                {files.map((file) => (
+                  <Button key={file.id} onClick={() => setOpenFile(file.id)} size="large">
+                    {file.name}
+                  </Button>
+                ))}
+              </Space>
             </Flex>
           ) : (
             <Typography>No files created yet for this channel</Typography>
           )}
-          <Button onClick={() => setIsModalOpen(true)}>Create new file</Button>
+          <Button
+            shape="round"
+            style={{ marginTop: '1rem' }}
+            onClick={() => setIsModalOpen(true)}
+          >
+            Create new file
+          </Button>
         </>
       )}
       {openFile && (
