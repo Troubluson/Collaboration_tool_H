@@ -14,16 +14,6 @@ class IMessage(BaseModel):
     sender: IUser
     channelId: str
 
-class IChannelEvent(BaseModel):
-    type: Literal["new_message", "user_join", "user_leave", "user_status_change"]
-    content: Union[IUser, IMessage, dict]
-
-class IChannel(BaseModel):
-    id: Optional[str] = None
-    name: str
-    users: list[IUser] = []
-    events: list[IChannelEvent] = []
-
 class IOperation(BaseModel):
     userId: str
     type: str
@@ -36,7 +26,6 @@ class IOperation(BaseModel):
             return doc[:self.position] + doc[self.position + len(self.text):]
         else:
             raise ValueError("Invalid operation type")
-
 class ICollaborativeDocument(BaseModel):
     id: Optional[str] = None
     channelId: str
@@ -44,6 +33,15 @@ class ICollaborativeDocument(BaseModel):
     content: str
     operations: List[IOperation]
 
+class IChannelEvent(BaseModel):
+    type: Literal["new_message", "user_join", "user_leave", "user_status_change", "document_created", "document_deleted"]
+    content: Union[IUser, IMessage, ICollaborativeDocument, dict]
+
+class IChannel(BaseModel):
+    id: Optional[str] = None
+    name: str
+    users: list[IUser] = []
+    events: list[IChannelEvent] = []
 
 class IWebSocketMessage(BaseModel):
     event: str

@@ -1,3 +1,4 @@
+import { ICollaborativeFile } from './CollaborativeFile';
 import { IMessage } from './Message';
 import { IUser } from './User';
 
@@ -7,11 +8,11 @@ export interface IChannel {
   users: IUser[];
 }
 
-type IChannelEvents = 'new_message' | 'user_join' | 'user_leave' | 'user_status_change';
+type IChannelEvents = 'new_message' | 'user_join' | 'user_leave' | 'user_status_change' | 'document_created' | 'document_deleted';
 
 export interface IChannelEvent {
   type: IChannelEvents;
-  content: IUser | IMessage;
+  content: IUser | IMessage | ICollaborativeFile;
 }
 
 export interface IChannelContext {

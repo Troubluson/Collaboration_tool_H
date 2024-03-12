@@ -4,10 +4,15 @@ import { useChannel } from '../../hooks/ChannelContext';
 import { ICollaborativeFile } from '../../@types/CollaborativeFile';
 import { Button, Flex, Input, Modal, Typography } from 'antd';
 import CollaborativeFile from './CollaborativeFile';
+import { IChannelEvent } from '../../@types/Channel';
 
 const serverBaseURL = 'http://localhost:8000';
 
-const CollaborativeFileTab = () => {
+interface Props {
+  documentEvent: IChannelEvent | null;
+}
+
+const CollaborativeFileTab = ({ documentEvent }: Props) => {
   const { currentChannel } = useChannel();
   const [files, setFiles] = useState<ICollaborativeFile[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,7 +44,6 @@ const CollaborativeFileTab = () => {
       },
     );
     if (res.data) {
-      setFiles([...files, res.data]);
       setIsModalOpen(false);
     }
   };
@@ -47,6 +51,23 @@ const CollaborativeFileTab = () => {
     setFiles([]);
     setOpenFile(null);
   }, [currentChannel]);
+
+  useEffect(() => {
+    switch (documentEvent?.type) {
+      case 'document_deleted':
+        setFiles(
+          files.filter(
+            (file) => file.id !== (documentEvent.content as ICollaborativeFile).id,
+          ),
+        );
+        break;
+      case 'document_created':
+        setFiles([...files, documentEvent.content as ICollaborativeFile]);
+        break;
+      default:
+        break;
+    }
+  }, [documentEvent]);
 
   return (
     <>
