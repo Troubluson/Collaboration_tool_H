@@ -170,6 +170,14 @@ async def create_collaborative_file(request: CreateFileRequest, channel_id):
     collaborative_files[collaborative_doc.id] = collaborative_doc
     return collaborative_doc
 
+@app.delete("/channels/{channel_id}/collaborate/{file_id}")
+async def delete_file(file_id, channel_id):
+    file = collaborative_files.get(file_id, None)
+    if not file:
+        raise EntityDoesNotExist("file")
+    collaborative_files.pop(file_id)
+    return 
+
 @app.websocket("/channels/{channel_id}/collaborate/{file_id}")
 async def collaborative_file(channel_id: str, file_id: str, websocket: WebSocket):
     await manager.connect(websocket)
