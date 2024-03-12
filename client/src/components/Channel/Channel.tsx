@@ -65,6 +65,10 @@ const Channel = () => {
       case 'user_status_change':
         updateUserStatus(newEvent.content as IUser);
         break;
+      case 'document_created':
+        break;
+      case 'document_deleted':
+        break;
       default:
         console.error('Unrecognized event', newEvent);
         break;
@@ -142,7 +146,17 @@ const Channel = () => {
             {
               key: 'docs',
               label: 'docs',
-              children: <CollaborativeFileTab />,
+              children: (
+                <CollaborativeFileTab
+                  documentEvent={
+                    ['document_created', 'document_deleted'].includes(
+                      newEvent?.type ?? '',
+                    )
+                      ? newEvent
+                      : null
+                  }
+                />
+              ),
             },
           ]}
         />

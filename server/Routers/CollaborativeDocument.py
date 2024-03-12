@@ -1,6 +1,6 @@
 from uuid import uuid4
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from Models.Entities import IWebSocketMessage
+from Models.Entities import IChannelEvent, IWebSocketMessage
 from Models.Events import ChangeData, ChangeEvent, OperationEvent, SyncData, SyncEvent
 from Models.Exceptions import EntityDoesNotExist
 from Models.Requests import CreateFileRequest
@@ -16,37 +16,47 @@ manager = WebSocketConnectionManager()
 
 @collaborate_router.get("/channels/{channel_id}/collaborate")
 async def get_collaborative_files(channel_id):
-    index = next((index for (index, c) in enumerate(channels) if c.id == channel_id), None)
-    if index is None: return "Channel not found", 400
+    channel = findFromList(channels, "id", channel_id)
+    if not channel:
+        raise EntityDoesNotExist("channel")
     files = [value for value in collaborative_files.values() if value.channelId == channel_id]
     return files
 
 @collaborate_router.post("/channels/{channel_id}/collaborate")
 async def create_collaborative_file(request: CreateFileRequest, channel_id):
-    index = next((index for (index, c) in enumerate(channels) if c.id == channel_id), None)
-    if index is None: return "Channel not found", 400
-    collaborative_doc = ICollaborativeDocument(id=str(uuid4()), name=request.name, channelId=channel_id, content="", operations=[])
-    collaborative_files[collaborative_doc.id] = collaborative_doc
-    return collaborative_doc
+    channel = findFromList(channels, "id", channel_id)
+    if not channel:
+        raise EntityDoesNotExist("channel")
+    document = ICollaborativeDocument(id=str(uuid4()), name=request.name, channelId=channel_id, content="", operations=[])
+    collaborative_files[document.id] = document
+    event = IChannelEvent(type="document_created", content=document)
+    channel.events.append(event)
+    return document
 
-@collaborate_router.delete("/channels/{channel_id}/collaborate/{file_id}")
-async def delete_file(file_id, channel_id):
+@collaborate_router.delete("/channels/{channel_id}/collaborate/{document_id}")
+async def delete_file(document_id, channel_id):
     # TODO: Check if user is in channel
-    file = collaborative_files.get(file_id, None)
-    if not file:
-        raise EntityDoesNotExist("file")
-    collaborative_files.pop(file_id)
+    channel = findFromList(channels, "id", channel_id)
+    if not channel:
+        raise EntityDoesNotExist("channel")
+
+    document = collaborative_files.get(document_id, None)
+    if not document:
+        raise EntityDoesNotExist("document")
+    collaborative_files.pop(document_id)
+    event = IChannelEvent(type="document_deleted", content=document)
+    channel.events.append(event)
     return 
 
-@collaborate_router.websocket("/channels/{channel_id}/collaborate/{file_id}")
-async def collaborative_file(channel_id: str, file_id: str, websocket: WebSocket):
+@collaborate_router.websocket("/channels/{channel_id}/collaborate/{document_id}")
+async def collaborative_file(channel_id: str, document_id: str, websocket: WebSocket):
     await manager.connect(websocket)
     try:
         if next((channel for channel in channels if getattr(channel, "id") == channel_id), None) == None:
             print(f"No such channel {channel_id}")
-        document = collaborative_files.get(file_id, None)
+        document = collaborative_files.get(document_id, None)
         if document == None:
-            print(f"No such file {file_id}")
+            print(f"No such document {document_id}")
             raise WebSocketDisconnect
         while True:
             message: IWebSocketMessage = await websocket.receive_json()
