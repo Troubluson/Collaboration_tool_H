@@ -33,7 +33,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
   const baseUrl = `${window.location.host}/channels/${currentChannel?.id}/collaborate/${documentId}`;
 
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    `ws://${baseUrl}`,
+    `wss://${baseUrl}`,
     {
       onOpen: () => console.log('websocket opened'),
       shouldReconnect: (closeEvent) => false,

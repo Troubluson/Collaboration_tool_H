@@ -25,9 +25,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
       return;
     }
     axios
-      .get<ICollaborativeFile[]>(
-        `${serverBaseURL}/channels/${currentChannel.id}/collaborate`,
-      )
+      .get<ICollaborativeFile[]>(`/channels/${currentChannel.id}/collaborate`)
       .then((res) => setFiles(res.data))
       .catch(console.error);
   }, [currentChannel]);
@@ -38,7 +36,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
       return;
     }
     const res = await axios.post<ICollaborativeFile>(
-      `${serverBaseURL}/channels/${currentChannel?.id}/collaborate`,
+      `/channels/${currentChannel?.id}/collaborate`,
       {
         name: newFileName,
       },

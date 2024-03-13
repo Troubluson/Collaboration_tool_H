@@ -20,6 +20,6 @@ app.add_middleware(
 app.mount("/", StaticFiles(directory="static/", html=True), name="static")
 
 config = Config()
-config.bind = ["0.0.0.0:8000"]
+config.bind = ["0.0.0.0:8080"]
 
 asyncio.run(serve(app, config=config))
