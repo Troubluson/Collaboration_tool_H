@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useUser } from './UserContext';
 import { IUser } from '../@types/User';
 
-const serverBaseURL = 'http://localhost:8000';
+const serverBaseURL = `${window.location.host}`;
 
 export const ChannelContext = createContext<IChannelContext>({
   joinedChannels: [],
@@ -36,7 +36,7 @@ export const ChannelProvider = ({ children }: Props) => {
 
   const leaveChannel = async () => {
     if (!currentChannel) return;
-    axios.post<IChannel>(`${serverBaseURL}/channels/${currentChannel.id}/leave`, user);
+    axios.post<IChannel>(`/channels/${currentChannel.id}/leave`, user);
     setAvailableChannels([...availableChannels, currentChannel]);
     setJoinedChannels(joinedChannels.filter((ch) => ch.id != currentChannel.id));
     setCurrentChannel(null);
@@ -45,7 +45,7 @@ export const ChannelProvider = ({ children }: Props) => {
   const setChannel = (channel: IChannel) => setCurrentChannel({ ...channel, users: [] });
 
   const fetchChannels = async () => {
-    const { data } = await axios.get<IChannel[]>(`${serverBaseURL}/channels`);
+    const { data } = await axios.get<IChannel[]>(`https://${serverBaseURL}/channels`);
     setAvailableChannels(
       data.filter((channel) => channel.users.every((u) => u.id !== user?.id)),
     );

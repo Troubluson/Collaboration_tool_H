@@ -1,4 +1,5 @@
 import asyncio
+from fastapi.staticfiles import StaticFiles
 from hypercorn.config import Config
 from hypercorn.asyncio import serve
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,5 +17,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+app.mount("/", StaticFiles(directory="static/", html=True), name="static")
 
-asyncio.run(serve(app, Config()))
+config = Config()
+config.bind = ["0.0.0.0:8000"]
+
+asyncio.run(serve(app, config=config))

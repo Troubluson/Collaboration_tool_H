@@ -30,7 +30,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
   const { currentChannel } = useChannel();
   const { user } = useUser();
   const textareaRef = useRef<null | TextAreaRef>(null);
-  const baseUrl = `localhost:8000/channels/${currentChannel?.id}/collaborate/${documentId}`;
+  const baseUrl = `${window.location.host}/channels/${currentChannel?.id}/collaborate/${documentId}`;
 
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
     `ws://${baseUrl}`,
@@ -41,7 +41,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
   );
 
   const deleteDocument = () => {
-    axios.delete(`http://${baseUrl}`).then(onDelete).catch(console.error); //Todo better error handling
+    axios.delete(`https://${baseUrl}`).then(onDelete).catch(console.error); //Todo better error handling
   };
 
   useEffect(() => {

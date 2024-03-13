@@ -1,0 +1,21 @@
+# Use the official Python 3.11 image as the base image
+FROM python:3.11 AS builder
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the server requirements file into the container
+COPY requirements.txt .
+
+# Install server dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the server code into the container
+COPY . /app
+
+
+# Expose ports
+EXPOSE 8000
+
+# Start FastAPI server with HTTP/2 support
+CMD ["python", "-m", "hypercorn", "main:app"]

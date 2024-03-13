@@ -21,7 +21,7 @@ import axios, { AxiosError } from 'axios';
 import { CreateChannelRequest, IChannel } from '../../@types/Channel';
 import { ErrorResponse } from '../../@types/ErrorResponse';
 
-const serverBaseURL = 'http://localhost:8000';
+const serverBaseURL = `${window.location.host}`;
 const { Sider } = Layout;
 
 type MenuItem = Required<MenuProps>['items'][number];
@@ -84,7 +84,7 @@ const SideBar = () => {
 
   const createChannel = async () => {
     try {
-      const { data: channel } = await axios.post<IChannel>(`${serverBaseURL}/channels`, {
+      const { data: channel } = await axios.post<IChannel>(`/channels`, {
         name,
         userId: user?.id,
       } as CreateChannelRequest);
@@ -102,10 +102,7 @@ const SideBar = () => {
   };
 
   const joinExistingChannel = async (channel: IChannel) => {
-    const res = await axios.post<IChannel>(
-      `${serverBaseURL}/channels/${channel.id}/join`,
-      user,
-    );
+    const res = await axios.post<IChannel>(`/channels/${channel.id}/join`, user);
     joinChannel(res.data);
     setChannel(res.data);
   };

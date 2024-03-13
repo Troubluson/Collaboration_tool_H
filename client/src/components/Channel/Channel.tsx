@@ -15,7 +15,7 @@ import CollaborativeFileTab from '../CollaborativeFile/CollaborativeFileTab';
 const { Title } = Typography;
 const { Header, Content } = Layout;
 
-const serverBaseURL = 'http://localhost:8000';
+const serverBaseURL = window.location.host;
 const Channel = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
@@ -34,7 +34,7 @@ const Channel = () => {
         sender: user,
         channelId: currentChannel.id,
       };
-      await axios.post<IMessage>(`${serverBaseURL}/channel/message`, newMessage);
+      await axios.post<IMessage>(`/channel/message`, newMessage);
     } catch (e) {
       if (axios.isAxiosError(e) && e.response) {
         const responseError = e.response?.data?.detail as ErrorResponse;
@@ -81,7 +81,7 @@ const Channel = () => {
     if (!currentChannel || !user?.id) return;
     try {
       eventSource = new EventSource(
-        `${serverBaseURL}/stream/${currentChannel.id}?user_id=${user?.id}`,
+        `https://${serverBaseURL}/stream/${currentChannel.id}?user_id=${user?.id}`,
       );
       eventSource.onmessage = (e) => {
         handleChannelEvents(JSON.parse(e.data));

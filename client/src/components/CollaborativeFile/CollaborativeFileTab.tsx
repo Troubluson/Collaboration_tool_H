@@ -6,7 +6,7 @@ import { Button, Flex, Input, Modal, Space, Typography, message } from 'antd';
 import CollaborativeFile from './CollaborativeFile';
 import { IChannelEvent } from '../../@types/Channel';
 
-const serverBaseURL = 'http://localhost:8000';
+const serverBaseURL = `${window.location.host}`;
 
 interface Props {
   documentEvent: IChannelEvent | null;

@@ -6,7 +6,7 @@ import { IUser } from '../../@types/User';
 import { useUser } from '../../hooks/UserContext';
 import { useEffect, useRef } from 'react';
 
-const serverBaseURL = 'http://localhost:8000';
+const serverBaseURL = `${window.location.host}`;
 
 const Login = () => {
   const {
@@ -16,7 +16,7 @@ const Login = () => {
   const { setUser, logout } = useUser();
 
   const onFinish = async ({ username }: Partial<IUser>) => {
-    const { data } = await axios.post<IUser>(`${serverBaseURL}/login`, { username });
+    const { data } = await axios.post<IUser>(`/login`, { username });
     setUser(data);
     localStorage.setItem('user', JSON.stringify(data));
   };
@@ -29,7 +29,7 @@ const Login = () => {
         isActive: true,
       };
       axios
-        .post<IUser>(`${serverBaseURL}/login_existing`, user)
+        .post<IUser>(`/login_existing`, user)
         .then(() => setUser(user))
         .catch(() => {
           message.error(`Could not log ${user.username} in automically`);

@@ -1,7 +1,7 @@
 import Sider from 'antd/es/layout/Sider';
 import { IUser } from '../../@types/User';
 import { useUser } from '../../hooks/UserContext';
-import { Avatar, List, theme } from 'antd';
+import { Avatar, List, Tooltip, theme } from 'antd';
 import { CheckCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
 import { useChannel } from '../../hooks/ChannelContext';
 import Title from 'antd/es/typography/Title';
@@ -43,19 +43,24 @@ const UserList = () => {
         dataSource={users}
         renderItem={(u) => (
           <List.Item key={u.id} style={{ borderBlockEndColor: textColor }}>
-            <List.Item.Meta
-              avatar={
-                <Avatar
-                  src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${u.id}`}
-                  shape="circle"
-                  style={{ backgroundColor: textColor }}
-                  gap={1}
-                />
-              }
-              title={<span style={{ color: textColor }}>{u.id === user?.id ? `${u.username} (You)` : u.username}</span>}
-
-              description={getStatusDescription(u)}
-            />
+            <Tooltip title={'latency 0ms'} color={'blue'}>
+              <List.Item.Meta
+                avatar={
+                  <Avatar
+                    src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${u.id}`}
+                    shape="circle"
+                    style={{ backgroundColor: textColor }}
+                    gap={1}
+                  />
+                }
+                title={
+                  <span style={{ color: textColor }}>
+                    {u.id === user?.id ? `${u.username} (You)` : u.username}
+                  </span>
+                }
+                description={getStatusDescription(u)}
+              />
+            </Tooltip>
           </List.Item>
         )}
       />
