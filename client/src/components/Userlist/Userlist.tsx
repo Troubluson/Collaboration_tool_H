@@ -52,8 +52,11 @@ const UserList = () => {
                   gap={1}
                 />
               }
-              title={<span style={{ color: textColor }}>{u.id === user?.id ? `${u.username} (You)` : u.username}</span>}
-
+              title={
+                <span style={{ color: textColor }}>
+                  {u.id === user?.id ? `${u.username} (You)` : u.username}
+                </span>
+              }
               description={getStatusDescription(u)}
             />
           </List.Item>
