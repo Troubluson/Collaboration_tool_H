@@ -1,6 +1,7 @@
 import asyncio
 import copy
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse
 from sse_starlette import EventSourceResponse
 from uuid import uuid4
 from state import *
@@ -131,14 +132,43 @@ async def leave_channel(channel_id, leaving_user: IUser):
     channel.users = [u for u in channel.users if u.id != user.id]
     return channel
 
-@app.post("/data")
-async def receive_data(data: LatencyThroughputData):
-    # You now have the latency and throughput data and can do whatever you want with it
-    print(f"Received data: {data}")
-    # For example, you could store it in a database here
-
+# Adds data to measurements dictionary for the user. There is no error handeling.
+@app.post("/data/{user_id}")
+async def receive_data(user_id: str, data: IMeasurements):
+    print(f"Received data {data} from user {user_id}")
+    measurements[user_id] = data 
     return {"message": "Data received successfully"}
 
+# This supports old testing without separate latency and throughput. To be deleted after client updated
 @app.get("/data")
 async def get_test():
-    return {"message":"GET request received"}
+    return {"message": "Latency test successfull"}
+
+   
+# Made to enable latency testing. Not tested
+@app.get("/data/latency")
+async def get_test():
+    return {"message": "Latency test successfull"}
+
+# returns a file for throughput testing. Tested to work with wget.
+@app.get("/data/throughput")
+async def get_test():
+    # returns some file
+    return FileResponse("ping_file.png", filename="ping_file.png")
+
+# Gets channel id and returns all user measurements. Not tested
+@app.get("/data/{channel_id}")
+async def get_channel_test_info(channel_id):    
+    channel = findFromList(channels, 'id', channel_id)
+    if not channel:
+        raise EntityDoesNotExist("channel")
+    users_in_channel = channel.users
+    return_list = []
+
+    for user_measuremets in measurements:
+        for IUser_channel in users_in_channel:
+            if user_measuremets == IUser_channel.id:
+                return_list.append(measurements[user_measuremets])
+
+    return return_list
+
