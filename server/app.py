@@ -1,5 +1,6 @@
 import asyncio
 import copy
+from typing import List
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from sse_starlette import EventSourceResponse
@@ -7,9 +8,9 @@ from uuid import uuid4
 from state import *
 from Routers.CollaborativeDocument import collaborate_router
 
-from Models.Requests import CreateChannelRequest
+from Models.Requests import CreateChannelRequest, LatencyRequest
 from Models.Exceptions import AlreadyExists, BadParameters, EntityDoesNotExist, InvalidSender
-from Models.Entities import IChannelEvent, IMessage, LatencyThroughputData
+from Models.Entities import IChannelEvent, IMeasurement, IMessage
 from utils.helpers import findFromList
 
 app = FastAPI()
@@ -82,7 +83,6 @@ async def login(sentUser: IUser):
         existing_user = findFromList(users, "id", sentUser.id)
         if not existing_user:
             users.append(sentUser)
-        print(users)
         return sentUser
     except:
         raise HTTPException(500, "An unknown error occured")
@@ -133,42 +133,31 @@ async def leave_channel(channel_id, leaving_user: IUser):
     return channel
 
 # Adds data to measurements dictionary for the user. There is no error handeling.
-@app.post("/data/{user_id}")
-async def receive_data(user_id: str, data: IMeasurements):
-    print(f"Received data {data} from user {user_id}")
-    measurements[user_id] = data 
+@app.post("/latency/{user_id}")
+async def receive_data(user_id: str, body: LatencyRequest):
+    user_to_latency[user_id] = body.latency
     return {"message": "Data received successfully"}
-
-# This supports old testing without separate latency and throughput. To be deleted after client updated
-@app.get("/data")
-async def get_test():
-    return {"message": "Latency test successfull"}
 
    
 # Made to enable latency testing. Not tested
-@app.get("/data/latency")
+@app.get("/latency")
 async def get_test():
     return {"message": "Latency test successfull"}
 
 # returns a file for throughput testing. Tested to work with wget.
-@app.get("/data/throughput")
+@app.get("/throughput")
 async def get_test():
     # returns some file
     return FileResponse("ping_file.png", filename="ping_file.png")
 
 # Gets channel id and returns all user measurements. Not tested
-@app.get("/data/{channel_id}")
-async def get_channel_test_info(channel_id):    
+@app.get("/channel/{channel_id}/latency")
+async def get_channel_test_info(channel_id) -> List[IMeasurement]:    
     channel = findFromList(channels, 'id', channel_id)
     if not channel:
         raise EntityDoesNotExist("channel")
-    users_in_channel = channel.users
-    return_list = []
+    users_in_channel = [user.id for user in channel.users]
+    latencies: List[IMeasurement] = [IMeasurement(user_id=user_id, latency=latency) for [user_id, latency] in user_to_latency.items() if user_id in users_in_channel]
 
-    for user_measuremets in measurements:
-        for IUser_channel in users_in_channel:
-            if user_measuremets == IUser_channel.id:
-                return_list.append(measurements[user_measuremets])
-
-    return return_list
+    return latencies
 

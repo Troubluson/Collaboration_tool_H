@@ -1,13 +1,11 @@
 import './index.css';
 
-import { useEffect } from 'react';
-import { ConfigProvider, Layout, theme } from 'antd';
+import { ConfigProvider, Layout } from 'antd';
 import SideBar from './components/Sidebar/Sidebar';
 import Channel from './components/Channel/Channel';
 import { ChannelProvider } from './hooks/ChannelContext';
-import { UserProvider, useUser } from './hooks/UserContext';
+import { UserProvider } from './hooks/UserContext';
 import UserList from './components/Userlist/Userlist';
-import axios from 'axios';
 import Test from './components/Diagnostics/Measurement';
 
 const { Footer } = Layout;

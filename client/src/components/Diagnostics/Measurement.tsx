@@ -7,7 +7,7 @@ const serverBaseURL = 'http://localhost:8000';
 async function testLatencyAndThroughput(userID: string): Promise<void> {
   try {
     const startTime: number = new Date().getTime();
-    const response: Response = await fetch(`${serverBaseURL}/data`);
+    const response: Response = await fetch(`${serverBaseURL}/latency`);
     const endTime: number = new Date().getTime();
 
     if (!response.ok) {
@@ -17,14 +17,10 @@ async function testLatencyAndThroughput(userID: string): Promise<void> {
     const latency: number = endTime - startTime;
     const size: number = parseInt(response.headers.get('Content-Length') || '0');
     const throughput: number = size / latency;
-
-    console.log(`User: ${userID}`);
-    console.log(`Latency: ${latency} ms`);
-    console.log(`Throughput: ${throughput} bytes/ms`);
-
     // Post the result to the server
-    const result: { latency: number; throughput: number } = { latency, throughput };
-    await axios.post(`${serverBaseURL}/data/${userID}`, result);
+    await axios.post(`${serverBaseURL}/latency/${userID}`, {
+      latency: latency,
+    });
 
     if (!response.ok) {
       throw new Error('HTTP error! status : ${postResponse.status}');
@@ -38,13 +34,16 @@ const Test = () => {
   const { user } = useUser();
 
   useEffect(() => {
+    if (!user) {
+      return;
+    }
+    testLatencyAndThroughput(user.id);
     //set a second timeout to give some time to
     const testWithDelay = () => {
-      if (user) {
-        setInterval(() => testLatencyAndThroughput(user.id), 20000);
-      }
+      setInterval(() => testLatencyAndThroughput(user.id), 25000);
     };
-  }, [user]);
+    testWithDelay();
+  }, [user?.id]);
 
   return null;
 };

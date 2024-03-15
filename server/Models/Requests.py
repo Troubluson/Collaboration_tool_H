@@ -11,6 +11,7 @@ class CreateChannelRequest(BaseModel):
 class CreateFileRequest(BaseModel):
     name: str
 
-
+class LatencyRequest(BaseModel):
+    latency: float
 
 

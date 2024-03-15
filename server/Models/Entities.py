@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class IUser(BaseModel):
     id: Optional[str] = None
     username: str
+    latency: Optional[float] = None
     isActive: Optional[bool] = False
 
 class IMessage(BaseModel):
@@ -50,3 +51,7 @@ class IWebSocketMessage(BaseModel):
 class LatencyThroughputData(BaseModel):
     latency: float
     throughput: float
+
+class IMeasurement(BaseModel):
+    user_id: str
+    latency: float

@@ -1,4 +1,11 @@
-import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { IChannelContext, IChannel } from '../@types/Channel';
 import axios from 'axios';
 import { useUser } from './UserContext';
@@ -90,17 +97,20 @@ export const ChannelProvider = ({ children }: Props) => {
 
   return (
     <ChannelContext.Provider
-      value={{
-        joinedChannels,
-        availableChannels,
-        joinChannel,
-        leaveChannel,
-        currentChannel,
-        setChannel,
-        userJoinChannel,
-        userLeaveChannel,
-        updateUserStatus,
-      }}
+      value={useMemo(
+        () => ({
+          joinedChannels,
+          availableChannels,
+          joinChannel,
+          leaveChannel,
+          currentChannel,
+          setChannel,
+          userJoinChannel,
+          userLeaveChannel,
+          updateUserStatus,
+        }),
+        [joinedChannels, availableChannels, currentChannel],
+      )}
     >
       {children}
     </ChannelContext.Provider>
