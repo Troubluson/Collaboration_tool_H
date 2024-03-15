@@ -18,7 +18,6 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [openFile, setOpenFile] = useState<string | null>(null);
-
   useEffect(() => {
     if (!currentChannel) {
       console.log('No channel');
@@ -30,7 +29,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
       )
       .then((res) => setFiles(res.data))
       .catch(console.error);
-  }, [currentChannel]);
+  }, [currentChannel?.id]);
 
   const createNewFile = async () => {
     if (!currentChannel) {
@@ -50,7 +49,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
   useEffect(() => {
     setFiles([]);
     setOpenFile(null);
-  }, [currentChannel]);
+  }, [currentChannel?.id]);
 
   useEffect(() => {
     switch (documentEvent?.type) {

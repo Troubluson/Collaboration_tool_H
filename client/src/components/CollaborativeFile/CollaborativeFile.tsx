@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ChangeEvent, useCallback, useRef } from 'react';
+import React, { useState, useEffect, ChangeEvent, useRef } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useChannel } from '../../hooks/ChannelContext';
 import {
@@ -11,9 +11,11 @@ import {
 import _ from 'lodash';
 import TextArea, { TextAreaRef } from 'antd/es/input/TextArea';
 import { useUser } from '../../hooks/UserContext';
-import { Button, Flex, Popconfirm } from 'antd';
+import { Button, Flex, Popconfirm, message } from 'antd';
 import { CloseOutlined, DeleteOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 interface Props {
   documentId: string | null;
@@ -23,11 +25,13 @@ interface Props {
 }
 
 const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Props) => {
-  const [originalContent, setOriginalContent] = useState<string>('');
   const [currentContent, setCurrentContent] = useState<string>('');
   const [revision, setRevision] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const { currentChannel } = useChannel();
+  const [lastOperation, setLastOperation] = useState<Operation | null>(null);
+  const [lastCursorPosition, setLastCursorPosition] = useState<number>(cursorPosition);
+  const [lastContent, setLastContent] = useState('');
   const { user } = useUser();
   const textareaRef = useRef<null | TextAreaRef>(null);
   const baseUrl = `localhost:8000/channels/${currentChannel?.id}/collaborate/${documentId}`;
@@ -50,7 +54,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
       if (message.event === 'document') {
         const syncMessage = message as IDocumentMessage;
         setCurrentContent(syncMessage.data.content);
-        setOriginalContent(syncMessage.data.content);
+        setLastContent(syncMessage.data.content);
         setRevision(syncMessage.data.revision);
       }
       if (message.event === 'change') {
@@ -72,23 +76,31 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
     }
   }, [readyState]);
 
-  const handleChange = (operation: Operation) => {
-    let text = originalContent;
+  const handleOperation = (operation: Operation): [string, number] => {
+    let text = lastContent;
     let cursorPos = cursorPosition;
     if (operation.type === 'insert') {
-      const firstSlice = originalContent.slice(0, operation.index) + operation.text;
-      const secondSlice = originalContent.slice(operation.index);
+      const firstSlice = lastContent.slice(0, operation.index) + operation.text;
+      const secondSlice = lastContent.slice(operation.index);
       text = firstSlice + secondSlice;
       cursorPos = cursorPos + operation.text.length;
     } else if (operation.type === 'delete') {
-      const firstSlice = originalContent.slice(0, operation.index);
-      const secondSlice = originalContent.slice(operation.index + operation.text.length);
+      const firstSlice = lastContent.slice(0, operation.index);
+      const secondSlice = lastContent.slice(operation.index + operation.text.length);
       text = firstSlice + secondSlice;
       cursorPos = cursorPos - (operation.index < cursorPos ? operation.text.length : 0);
     }
-    setCursorPosition(cursorPos);
-    setCurrentContent(text);
-    setOriginalContent(text);
+    return [text, cursorPos];
+  };
+
+  const handleChange = (operation: Operation) => {
+    if (
+      operation.text === lastOperation?.text &&
+      operation.index === lastOperation.index
+    ) {
+      return;
+    } else {
+    }
   };
 
   useEffect(() => {
@@ -104,6 +116,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
       return;
     }
     const newContent: string = e.target.value;
+    console.log(newContent);
     const selectionStart =
       textareaRef.current.resizableTextArea?.textArea.selectionStart ?? 0;
     const index = selectionStart;
@@ -120,16 +133,23 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
       changeStart,
       changeStart + absChangeLen,
     );
+    const operation = {
+      type: isInsert ? 'insert' : 'delete',
+      index: changeStart,
+      userId: user?.id ?? '',
+      revision: revision + 1,
+      text: change,
+    } as Operation;
+
+    const [text, cursorPos] = handleOperation(operation);
+    setCursorPosition(cursorPos);
+    setCurrentContent(text);
+    setLastContent(text);
+    setLastOperation(operation);
 
     const message = {
       event: 'edit',
-      data: {
-        type: isInsert ? 'insert' : 'delete',
-        index: changeStart,
-        userId: user?.id ?? '',
-        revision: revision + 1,
-        text: change,
-      },
+      data: operation,
     } as IEditMessage;
     sendJsonMessage(message);
   };
@@ -171,21 +191,21 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
             </div>
           )}
         </Flex>
+        <TextArea
+          rows={10}
+          cols={50}
+          value={currentContent}
+          disabled={readyState !== ReadyState.OPEN}
+          onChange={handleInputChange}
+          ref={textareaRef}
+          onKeyUp={() =>
+            setCursorPosition(
+              textareaRef.current?.resizableTextArea?.textArea.selectionStart ??
+                cursorPosition,
+            )
+          }
+        />
       </div>
-      <TextArea
-        rows={10}
-        cols={50}
-        value={currentContent}
-        disabled={readyState !== ReadyState.OPEN}
-        onChange={handleInputChange}
-        ref={textareaRef}
-        onKeyUp={() =>
-          setCursorPosition(
-            textareaRef.current?.resizableTextArea?.textArea.selectionStart ??
-              cursorPosition,
-          )
-        }
-      ></TextArea>
     </div>
   );
 };
