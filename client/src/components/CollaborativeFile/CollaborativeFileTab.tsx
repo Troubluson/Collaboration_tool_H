@@ -30,7 +30,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
       )
       .then((res) => setFiles(res.data))
       .catch(console.error);
-  }, [currentChannel]);
+  }, [currentChannel?.id]);
 
   const createNewFile = async () => {
     if (!currentChannel) {
@@ -50,7 +50,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
   useEffect(() => {
     setFiles([]);
     setOpenFile(null);
-  }, [currentChannel]);
+  }, [currentChannel?.id]);
 
   useEffect(() => {
     switch (documentEvent?.type) {
