@@ -5,6 +5,7 @@ import axios from 'axios';
 import { IUser } from '../../@types/User';
 import { useUser } from '../../hooks/UserContext';
 import { useEffect, useRef } from 'react';
+import { ErrorResponse } from '../../@types/ErrorResponse';
 
 const serverBaseURL = 'http://localhost:8000';
 
@@ -16,9 +17,18 @@ const Login = () => {
   const { setUser, logout } = useUser();
 
   const onFinish = async ({ username }: Partial<IUser>) => {
-    const { data } = await axios.post<IUser>(`${serverBaseURL}/login`, { username });
-    setUser(data);
-    localStorage.setItem('user', JSON.stringify(data));
+    try {
+      const { data } = await axios.post<IUser>(`${serverBaseURL}/login`, { username });
+      setUser(data);
+      localStorage.setItem('user', JSON.stringify(data));
+    } catch (e: unknown) {
+      if (axios.isAxiosError(e) && e.response) {
+        const responseError = e.response?.data?.detail as ErrorResponse;
+        message.error(`${responseError.type}: ${responseError.reason}`);
+      } else {
+        message.error('An unknwon error occured');
+      }
+    }
   };
 
   useEffect(() => {
@@ -32,7 +42,7 @@ const Login = () => {
         .post<IUser>(`${serverBaseURL}/login_existing`, user)
         .then(() => setUser(user))
         .catch(() => {
-          message.error(`Could not log ${user.username} in automically`);
+          message.error(`Could not log in ${user.username} automically`);
           logout();
         });
     }

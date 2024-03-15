@@ -71,6 +71,10 @@ async def login(sentUser: IUser):
         username = sentUser.username.strip()
         if username == "" or username is None:
             raise BadParameters(why="Username cannot be empty")
+        existing_user = findFromList(users, "username", username)
+        if existing_user:
+            existing_user.isActive = True
+            return existing_user
         user = IUser(id=str(uuid4()), username=username, isActive=True)
         users.append(user)
         return user
@@ -79,13 +83,13 @@ async def login(sentUser: IUser):
     
 @app.post("/login_existing")
 async def login(sentUser: IUser):
-    try: 
-        existing_user = findFromList(users, "id", sentUser.id)
-        if not existing_user:
-            users.append(sentUser)
-        return sentUser
-    except:
-        raise HTTPException(500, "An unknown error occured")
+    existing_user = findFromList(users, "username", sentUser.username)
+    if existing_user.id != sentUser.id:
+        raise HTTPException(400, "Username has been taken")
+    if not existing_user:
+        users.append(sentUser)
+    return sentUser
+
 
 @app.get("/channels")
 async def get_channels():
