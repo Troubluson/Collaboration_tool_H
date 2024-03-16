@@ -140,13 +140,13 @@ async def leave_channel(channel_id, leaving_user: IUser):
 @app.post("/latency/{user_id}")
 async def receive_data(user_id: str, body: LatencyRequest):
     user_to_latency[user_id] = body.latency
-    return {"message": "Data received successfully"}
+    return "", 200
 
    
 # Made to enable latency testing. Not tested
 @app.get("/latency")
 async def get_test():
-    return {"message": "Latency test successfull"}
+    return {"message": "Pong"}
 
 # returns a file for throughput testing. Tested to work with wget.
 @app.get("/throughput")

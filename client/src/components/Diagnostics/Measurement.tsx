@@ -4,31 +4,23 @@ import { useUser } from '../../hooks/UserContext';
 
 const serverBaseURL = 'http://localhost:8000';
 
-async function testLatencyAndThroughput(userID: string): Promise<void> {
+const pingLatency = async (userId: string) => {
   try {
-    const startTime: number = new Date().getTime();
-    const response: Response = await fetch(`${serverBaseURL}/latency`);
+    const startTime = new Date().getTime();
+    const response = await axios.get(`${serverBaseURL}/latency`);
     const endTime: number = new Date().getTime();
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status : ${response.status}`);
-    }
-
-    const latency: number = endTime - startTime;
-    const size: number = parseInt(response.headers.get('Content-Length') || '0');
+    const latency = endTime - startTime;
+    const size = response.headers['Content-Length'] as number;
     const throughput: number = size / latency;
     // Post the result to the server
-    await axios.post(`${serverBaseURL}/latency/${userID}`, {
+    await axios.post(`${serverBaseURL}/latency/${userId}`, {
       latency: latency,
     });
-
-    if (!response.ok) {
-      throw new Error('HTTP error! status : ${postResponse.status}');
-    }
   } catch (error) {
-    console.error('There was an error with the fetch operation: ', error);
+    console.error('There was an error with the : ', error);
   }
-}
+};
 
 const Test = () => {
   const { user } = useUser();
@@ -37,12 +29,9 @@ const Test = () => {
     if (!user) {
       return;
     }
-    testLatencyAndThroughput(user.id);
+    pingLatency(user.id);
     //set a second timeout to give some time to
-    const testWithDelay = () => {
-      setInterval(() => testLatencyAndThroughput(user.id), 25000);
-    };
-    testWithDelay();
+    setInterval(() => pingLatency(user.id), 25000);
   }, [user?.id]);
 
   return null;
