@@ -1,9 +1,13 @@
 import asyncio
+from collections import defaultdict
 import copy
 from typing import List
 from fastapi import FastAPI, HTTPException, Request
 
 from fastapi.responses import FileResponse
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from sse_starlette import EventSourceResponse
 from uuid import uuid4
 from state import *
@@ -19,6 +23,22 @@ app.include_router(collaborate_router)
 def serialize_message(event: IChannelEvent):
     event_copy = copy.deepcopy(event)
     return event_copy.json()
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    reformatted_message = ""
+    for pydantic_error in exc.errors():
+        loc, msg = pydantic_error["loc"], pydantic_error["msg"]
+        filtered_loc = loc[1:] if loc[0] in ("body", "query", "path") else loc
+        field_string = ".".join(filtered_loc)  # nested fields with dot-notation
+        reformatted_message = f"'{field_string}' {msg}"
+
+    return JSONResponse(
+        status_code=422,
+        content=jsonable_encoder(
+            {"type": "Invalid request", "why": reformatted_message}
+        ),
+    )
 
 
 @app.get("/")
