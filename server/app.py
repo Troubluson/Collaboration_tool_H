@@ -2,12 +2,11 @@ import asyncio
 import copy
 from typing import List
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse
+
 from sse_starlette import EventSourceResponse
 from uuid import uuid4
 from state import *
 from Routers.CollaborativeDocument import collaborate_router
-
 from Models.Requests import CreateChannelRequest, LatencyRequest
 from Models.Exceptions import AlreadyExists, BadParameters, EntityDoesNotExist, InvalidSender
 from Models.Entities import IChannelEvent, IMeasurement, IMessage
@@ -19,6 +18,7 @@ app.include_router(collaborate_router)
 def serialize_message(event: IChannelEvent):
     event_copy = copy.deepcopy(event)
     return event_copy.json()
+
 
 @app.get("/")
 def read_root():
@@ -67,25 +67,28 @@ async def send_message(message: IMessage):
 
 @app.post("/login")
 async def login(sentUser: IUser):
-    try: 
-        username = sentUser.username.strip()
-        if username == "" or username is None:
-            raise BadParameters(why="Username cannot be empty")
-        existing_user = findFromList(users, "username", username)
-        if existing_user:
+
+    username = sentUser.username.strip()
+    if username == "" or username is None:
+        raise BadParameters(why="Username cannot be empty")
+    existing_user = findFromList(users, "username", username)
+    if existing_user:
+        print(existing_user)
+        if existing_user.isActive != True:
             existing_user.isActive = True
             return existing_user
-        user = IUser(id=str(uuid4()), username=username, isActive=True)
-        users.append(user)
-        return user
-    except:
-        raise HTTPException(500, "An unknown error occured")
+        else:
+            raise AlreadyExists(f"User with username {username}")
+    user = IUser(id=str(uuid4()), username=username, isActive=True)
+    users.append(user)
+    return user
+
     
 @app.post("/login_existing")
 async def login(sentUser: IUser):
     existing_user = findFromList(users, "username", sentUser.username)
-    if existing_user.id != sentUser.id:
-        raise HTTPException(400, "Username has been taken")
+    if existing_user and existing_user.id != sentUser.id:
+        raise AlreadyExists(f"User with username {sentUser.username}")
     if not existing_user:
         users.append(sentUser)
     return sentUser
