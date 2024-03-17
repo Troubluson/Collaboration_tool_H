@@ -13,7 +13,7 @@ import TextArea, { TextAreaRef } from 'antd/es/input/TextArea';
 import { useUser } from '../../hooks/UserContext';
 import { Button, Flex, Popconfirm } from 'antd';
 import { CloseOutlined, DeleteOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import apiClient from '../../api/apiClient';
 
 interface Props {
   documentId: string | null;
@@ -30,10 +30,10 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
   const { currentChannel } = useChannel();
   const { user } = useUser();
   const textareaRef = useRef<null | TextAreaRef>(null);
-  const baseUrl = `localhost:8000/channels/${currentChannel?.id}/collaborate/${documentId}`;
+  const path = `/channels/${currentChannel?.id}/collaborate/${documentId}`;
 
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    `ws://${baseUrl}`,
+    `ws://localhost:8000${path}`,
     {
       onOpen: () => console.log('websocket opened'),
       shouldReconnect: (closeEvent) => false,
@@ -41,7 +41,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
   );
 
   const deleteDocument = () => {
-    axios.delete(`http://${baseUrl}`).then(onDelete).catch(console.error); //Todo better error handling
+    apiClient.delete(path).then(onDelete).catch(console.error); //Todo better error handling
   };
 
   useEffect(() => {

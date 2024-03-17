@@ -4,8 +4,9 @@ import { Content } from 'antd/es/layout/layout';
 import axios from 'axios';
 import { IUser } from '../../@types/User';
 import { useUser } from '../../hooks/UserContext';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { ErrorResponse } from '../../@types/ErrorResponse';
+import apiClient from '../../api/apiClient';
 
 const serverBaseURL = 'http://localhost:8000';
 
@@ -38,8 +39,8 @@ const Login = () => {
         ...JSON.parse(savedUser),
         isActive: true,
       };
-      axios
-        .post<IUser>(`${serverBaseURL}/login_existing`, user)
+      apiClient
+        .post<IUser>(`/login_existing`, user)
         .then(() => setUser(user))
         .catch(() => {
           message.error(`Could not log in ${user.username} automically`);

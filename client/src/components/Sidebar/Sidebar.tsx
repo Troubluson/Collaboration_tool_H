@@ -20,6 +20,7 @@ import { useUser } from '../../hooks/UserContext';
 import axios, { AxiosError } from 'axios';
 import { CreateChannelRequest, IChannel } from '../../@types/Channel';
 import { ErrorResponse } from '../../@types/ErrorResponse';
+import apiClient from '../../api/apiClient';
 
 const serverBaseURL = 'http://localhost:8000';
 const { Sider } = Layout;
@@ -84,7 +85,7 @@ const SideBar = () => {
 
   const createChannel = async () => {
     try {
-      const { data: channel } = await axios.post<IChannel>(`${serverBaseURL}/channels`, {
+      const { data: channel } = await apiClient.post<IChannel>(`/channels`, {
         name,
         userId: user?.id,
       } as CreateChannelRequest);
@@ -102,10 +103,7 @@ const SideBar = () => {
   };
 
   const joinExistingChannel = async (channel: IChannel) => {
-    const res = await axios.post<IChannel>(
-      `${serverBaseURL}/channels/${channel.id}/join`,
-      user,
-    );
+    const res = await apiClient.post<IChannel>(`/channels/${channel.id}/join`, user);
     joinChannel(res.data);
     setChannel(res.data);
   };
