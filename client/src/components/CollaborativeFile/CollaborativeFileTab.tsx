@@ -1,10 +1,10 @@
-import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useChannel } from '../../hooks/ChannelContext';
 import { ICollaborativeFile } from '../../@types/CollaborativeFile';
 import { Button, Flex, Input, Modal, Space, Typography, message } from 'antd';
 import CollaborativeFile from './CollaborativeFile';
 import { IChannelEvent } from '../../@types/Channel';
+import apiClient from '../../api/apiClient';
 
 const serverBaseURL = 'http://localhost:8000';
 
@@ -24,7 +24,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
       console.log('No channel');
       return;
     }
-    axios
+    apiClient
       .get<ICollaborativeFile[]>(
         `${serverBaseURL}/channels/${currentChannel.id}/collaborate`,
       )
@@ -37,7 +37,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
       console.log('No channel');
       return;
     }
-    const res = await axios.post<ICollaborativeFile>(
+    const res = await apiClient.post<ICollaborativeFile>(
       `${serverBaseURL}/channels/${currentChannel?.id}/collaborate`,
       {
         name: newFileName,
