@@ -19,16 +19,11 @@ const Login = () => {
 
   const onFinish = async ({ username }: Partial<IUser>) => {
     try {
-      const { data } = await axios.post<IUser>(`${serverBaseURL}/login`, { username });
+      const { data } = await apiClient.post<IUser>(`/login`, { username });
       setUser(data);
       localStorage.setItem('user', JSON.stringify(data));
-    } catch (e: unknown) {
-      if (axios.isAxiosError(e) && e.response) {
-        const responseError = e.response?.data?.detail as ErrorResponse;
-        message.error(`${responseError.type}: ${responseError.reason}`);
-      } else {
-        message.error('An unknwon error occured');
-      }
+    } catch (error) {
+      message.error(`Login failed:\n ${(error as Error).message}`);
     }
   };
 

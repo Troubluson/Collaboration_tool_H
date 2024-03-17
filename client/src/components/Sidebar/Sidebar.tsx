@@ -92,20 +92,19 @@ const SideBar = () => {
       joinChannel(channel);
       setChannel(channel);
       setIsModalOpen(false);
-    } catch (e) {
-      if (axios.isAxiosError(e) && e.response) {
-        const responseError = e.response?.data?.detail as ErrorResponse;
-        message.error(`${responseError.type}: ${responseError.reason}`);
-      } else {
-        message.error((e as Error).message);
-      }
+    } catch (error) {
+      message.error(`Could not create channel:\n ${(error as Error).message}`);
     }
   };
 
   const joinExistingChannel = async (channel: IChannel) => {
-    const res = await apiClient.post<IChannel>(`/channels/${channel.id}/join`, user);
-    joinChannel(res.data);
-    setChannel(res.data);
+    try {
+      const res = await apiClient.post<IChannel>(`/channels/${channel.id}/join`, user);
+      joinChannel(res.data);
+      setChannel(res.data);
+    } catch (error) {
+      message.error(`Could not join channel:\n ${(error as Error).message}`);
+    }
   };
 
   return (

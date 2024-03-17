@@ -35,13 +35,8 @@ const Channel = () => {
         channelId: currentChannel.id,
       };
       await axios.post<IMessage>(`${serverBaseURL}/channel/message`, newMessage);
-    } catch (e) {
-      if (axios.isAxiosError(e) && e.response) {
-        const responseError = e.response?.data?.detail as ErrorResponse;
-        message.error(`${responseError.type}: ${responseError.reason}`);
-      } else {
-        message.error((e as Error).message);
-      }
+    } catch (error) {
+      message.error(`Could not send message:\n ${(error as Error).message}`);
     }
   };
 

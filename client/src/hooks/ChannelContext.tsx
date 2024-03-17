@@ -11,6 +11,7 @@ import axios from 'axios';
 import { useUser } from './UserContext';
 import { IUser } from '../@types/User';
 import apiClient from '../api/apiClient';
+import { message } from 'antd';
 
 const serverBaseURL = 'http://localhost:8000';
 
@@ -44,22 +45,30 @@ export const ChannelProvider = ({ children }: Props) => {
 
   const leaveChannel = async () => {
     if (!currentChannel) return;
-    apiClient.post<IChannel>(`$/channels/${currentChannel.id}/leave`, user);
-    setAvailableChannels([...availableChannels, currentChannel]);
-    setJoinedChannels(joinedChannels.filter((ch) => ch.id != currentChannel.id));
-    setCurrentChannel(null);
+    try {
+      apiClient.post<IChannel>(`$/channels/${currentChannel.id}/leave`, user);
+      setAvailableChannels([...availableChannels, currentChannel]);
+      setJoinedChannels(joinedChannels.filter((ch) => ch.id != currentChannel.id));
+      setCurrentChannel(null);
+    } catch (error) {
+      message.error(`Could not leave channel:\n ${(error as Error).message}`);
+    }
   };
 
   const setChannel = (channel: IChannel) => setCurrentChannel({ ...channel, users: [] });
 
   const fetchChannels = async () => {
-    const { data } = await apiClient.get<IChannel[]>(`/channels`);
-    setAvailableChannels(
-      data.filter((channel) => channel.users.every((u) => u.id !== user?.id)),
-    );
-    setJoinedChannels(
-      data.filter((channel) => channel.users.some((u) => u.id === user?.id)),
-    );
+    try {
+      const { data } = await apiClient.get<IChannel[]>(`/channels`);
+      setAvailableChannels(
+        data.filter((channel) => channel.users.every((u) => u.id !== user?.id)),
+      );
+      setJoinedChannels(
+        data.filter((channel) => channel.users.some((u) => u.id === user?.id)),
+      );
+    } catch (error) {
+      message.error(`Could not get channels:\n ${(error as Error).message}`);
+    }
   };
 
   const updateChannelUserList = (user: IUser, action: 'join' | 'leave') => {
