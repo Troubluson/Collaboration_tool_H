@@ -11,7 +11,7 @@ import {
 import _ from 'lodash';
 import TextArea, { TextAreaRef } from 'antd/es/input/TextArea';
 import { useUser } from '../../hooks/UserContext';
-import { Button, Flex, Popconfirm } from 'antd';
+import { Button, Flex, Popconfirm, message } from 'antd';
 import { CloseOutlined, DeleteOutlined } from '@ant-design/icons';
 import apiClient from '../../api/apiClient';
 
@@ -41,7 +41,12 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
   );
 
   const deleteDocument = () => {
-    apiClient.delete(path).then(onDelete).catch(console.error); //Todo better error handling
+    apiClient
+      .delete(path)
+      .then(onDelete)
+      .catch((error) =>
+        message.error(`Could not delete document:\n ${(error as Error).message}`),
+      ); //Todo better error handling
   };
 
   useEffect(() => {

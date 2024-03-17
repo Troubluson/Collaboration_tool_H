@@ -29,7 +29,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
         `${serverBaseURL}/channels/${currentChannel.id}/collaborate`,
       )
       .then((res) => setFiles(res.data))
-      .catch(console.error);
+      .catch((error) => message.error(`Could not get files:\n ${error.message}`));
   }, [currentChannel?.id]);
 
   const createNewFile = async () => {
@@ -37,14 +37,16 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
       console.log('No channel');
       return;
     }
-    const res = await apiClient.post<ICollaborativeFile>(
-      `${serverBaseURL}/channels/${currentChannel?.id}/collaborate`,
-      {
-        name: newFileName,
-      },
-    );
-    if (res.data) {
+    try {
+      const { data } = await apiClient.post<ICollaborativeFile>(
+        `${serverBaseURL}/channels/${currentChannel?.id}/collaborate`,
+        {
+          name: newFileName,
+        },
+      );
       setIsModalOpen(false);
+    } catch (error) {
+      message.error(`Could not create document:\n ${(error as Error).message}`);
     }
   };
   useEffect(() => {
