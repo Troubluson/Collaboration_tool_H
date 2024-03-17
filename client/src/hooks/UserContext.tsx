@@ -1,6 +1,7 @@
-import { ReactNode, createContext, useContext, useState } from 'react';
+import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { IUser, IUserContext } from '../@types/User';
 import Login from '../components/Login/Login';
+import { pingLatency } from '../components/Diagnostics/Measurement';
 
 export const UserContext = createContext<IUserContext>({
   user: null,
@@ -20,6 +21,15 @@ export const UserProvider = ({ children }: Props) => {
     localStorage.removeItem('user');
     setUser(null);
   };
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+    pingLatency(user.id);
+    //Ping every 30s
+    setInterval(() => pingLatency(user.id), 30000);
+  }, [user]);
 
   return (
     <UserContext.Provider

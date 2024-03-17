@@ -6,7 +6,6 @@ import Channel from './components/Channel/Channel';
 import { ChannelProvider } from './hooks/ChannelContext';
 import { UserProvider } from './hooks/UserContext';
 import UserList from './components/Userlist/Userlist';
-import Test from './components/Diagnostics/Measurement';
 
 const { Footer } = Layout;
 
@@ -24,7 +23,6 @@ const App = () => {
       <Layout hasSider>
         <UserProvider>
           <ChannelProvider>
-            <Test />
             <SideBar />
             <Layout style={{ marginLeft: 200, height: '100vh' }}>
               <Channel />

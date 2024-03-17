@@ -3,6 +3,7 @@ import copy
 from typing import List
 from fastapi import FastAPI, HTTPException, Request
 
+from fastapi.responses import FileResponse
 from sse_starlette import EventSourceResponse
 from uuid import uuid4
 from state import *
@@ -143,7 +144,7 @@ async def leave_channel(channel_id, leaving_user: IUser):
 @app.post("/latency/{user_id}")
 async def receive_data(user_id: str, body: LatencyRequest):
     user_to_latency[user_id] = body.latency
-    return "", 200
+    return ""
 
    
 # Made to enable latency testing. Not tested
