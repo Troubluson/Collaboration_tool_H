@@ -1,3 +1,4 @@
+from fastapi import UploadFile
 from Models.Entities import IChannel, ICollaborativeDocument, IUser
 
 
@@ -12,3 +13,5 @@ collaborative_files:dict[str, ICollaborativeDocument] = {
     }
 
 user_to_latency: dict[str, float] = {}
+
+files: dict[str, UploadFile] = {}

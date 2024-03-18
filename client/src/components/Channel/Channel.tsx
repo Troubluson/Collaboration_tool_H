@@ -6,11 +6,12 @@ import { useUser } from '../../hooks/UserContext';
 import { IMessage } from '../../@types/Message';
 import { IChannelEvent } from '../../@types/Channel';
 import { IUser } from '../../@types/User';
-import { ErrorResponse } from '../../@types/ErrorResponse';
 import { ApiOutlined } from '@ant-design/icons';
 import MessageInput from './MessageInput';
 import Message from './Message';
 import CollaborativeFileTab from '../CollaborativeFile/CollaborativeFileTab';
+import { RcFile } from 'antd/es/upload';
+import apiClient from '../../api/apiClient';
 
 const { Title } = Typography;
 const { Header, Content } = Layout;
@@ -37,6 +38,19 @@ const Channel = () => {
       await axios.post<IMessage>(`${serverBaseURL}/channel/message`, newMessage);
     } catch (error) {
       message.error(`Could not send message:\n ${(error as Error).message}`);
+    }
+  };
+
+  const onFileSend = async (file: RcFile) => {
+    try {
+      if (!user?.id || !currentChannel?.id) return;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('senderId', user.id);
+      formData.append('channelId', currentChannel.id);
+      await apiClient.postForm('/channel/file', formData);
+    } catch (error) {
+      message.error(`Could not send file:\n ${(error as Error).message}`);
     }
   };
 
@@ -106,7 +120,7 @@ const Channel = () => {
         textAlign: 'center',
         background: colorBgContainer,
         borderRadius: borderRadiusLG,
-        minHeight: '85vh',
+        maxHeight: '84vh',
       }}
     >
       <Content
@@ -122,7 +136,7 @@ const Channel = () => {
           <Message key={message.id} message={message} />
         ))}
       </Content>
-      <MessageInput onSend={onMessageSent} />
+      <MessageInput onSend={onMessageSent} onFileSend={onFileSend} />
     </Flex>
   );
 

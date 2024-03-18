@@ -2,3 +2,4 @@ fastapi
 hypercorn
 sse-starlette
 websocket
+python-multipart

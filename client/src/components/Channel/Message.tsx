@@ -1,6 +1,7 @@
-import { Avatar } from 'antd';
+import { Avatar, Button } from 'antd';
 import { IMessage } from '../../@types/Message';
 import { useUser } from '../../hooks/UserContext';
+import { DownloadOutlined } from '@ant-design/icons';
 
 interface Props {
   message: IMessage;
@@ -56,11 +57,26 @@ const Message = ({ message }: Props) => {
             margin: '0.75em',
             marginTop: 0,
             paddingTop: '0.5em',
-            width: '15em',
+            width: 'fit-content',
+            wordBreak: 'break-word',
             float: isFromSelf ? 'left' : 'right',
+            overflowX: 'hidden',
           }}
         >
-          {message.content}
+          {message.file ? (
+            <Button
+              type="text"
+              icon={<DownloadOutlined rev={undefined} />}
+              style={{ padding: 0, width: '100%', wordBreak: 'break-word' }}
+              size="small"
+              href={`http://localhost:8000/file/${message.file}`}
+              target="_blank"
+            >
+              {message.content}
+            </Button>
+          ) : (
+            message.content
+          )}
         </div>
       </div>
     </div>
