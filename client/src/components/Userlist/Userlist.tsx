@@ -33,6 +33,7 @@ const UserList = () => {
 
   useEffect(() => {
     getUserLatencies();
+    setInterval(() => getUserLatencies(), 30000);
   }, [users]);
 
   const getUserLatencies = () => {
@@ -53,7 +54,7 @@ const UserList = () => {
         });
         setUserWithLatency(modifiedUsers);
       })
-      .catch(() => message.error('Could not get user latencies'));
+      .catch(() => console.error('Could not get user latencies'));
   };
 
   if (!currentChannel) {
