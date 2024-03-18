@@ -5,8 +5,20 @@ import { BASE_URL } from '../config';
 const apiClient = axios.create({
   baseURL: BASE_URL,
 });
-apiClient.interceptors.response.use(
-  function (response) {
+
+apiClient.interceptors.request.use(
+    function (config) {
+        // Add a timestamp to the request configuration
+        config.headers['request-startTime'] = Date.now()
+        return config
+    },
+    function (error) {
+        return Promise.reject(error);
+    }
+);
+
+apiClient.interceptors.response.use(function (response) {
+    response.config.headers['request-duration'] = Date.now() - response.config.headers['request-startTime']
     return response;
   },
   function (error) {
