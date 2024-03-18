@@ -1,6 +1,5 @@
 import asyncio
 import copy
-from tempfile import SpooledTemporaryFile
 from typing import List
 from fastapi import FastAPI, File, Form, Request, Response, UploadFile
 
