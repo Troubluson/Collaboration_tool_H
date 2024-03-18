@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ChangeEvent, useCallback, useRef } from 'react';
+import { useState, useEffect, ChangeEvent, useRef, useMemo } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useChannel } from '../../hooks/ChannelContext';
 import {
@@ -85,15 +85,17 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
       const firstSlice = originalContent.slice(0, operation.index) + operation.text;
       const secondSlice = originalContent.slice(operation.index);
       text = firstSlice + secondSlice;
-      cursorPos = cursorPos + operation.text.length;
+      cursorPos = cursorPos + (operation.index < cursorPos ? operation.text.length : 0);
     } else if (operation.type === 'delete') {
       const firstSlice = originalContent.slice(0, operation.index);
       const secondSlice = originalContent.slice(operation.index + operation.text.length);
       text = firstSlice + secondSlice;
       cursorPos = cursorPos - (operation.index < cursorPos ? operation.text.length : 0);
     }
-    setCursorPosition(cursorPos);
-    setCurrentContent(text);
+    if (text !== currentContent) {
+      setCursorPosition(cursorPos);
+      setCurrentContent(text);
+    }
     setOriginalContent(text);
   };
 
@@ -110,8 +112,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
       return;
     }
     const newContent: string = e.target.value;
-    const selectionStart =
-      textareaRef.current.resizableTextArea?.textArea.selectionStart ?? 0;
+    const selectionStart = textareaRef.current.resizableTextArea?.textArea.selectionStart;
     const index = selectionStart;
     const changeLength = newContent.length - currentContent.length;
     const absChangeLen = Math.abs(changeLength);
@@ -138,6 +139,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
       },
     } as IEditMessage;
     sendJsonMessage(message);
+    setCurrentContent(e.target.value);
   };
 
   return (
@@ -178,20 +180,26 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
           )}
         </Flex>
       </div>
-      <TextArea
-        rows={10}
-        cols={50}
-        value={currentContent}
-        disabled={readyState !== ReadyState.OPEN}
-        onChange={handleInputChange}
-        ref={textareaRef}
-        onKeyUp={() =>
-          setCursorPosition(
-            textareaRef.current?.resizableTextArea?.textArea.selectionStart ??
-              cursorPosition,
-          )
-        }
-      ></TextArea>
+      {useMemo(
+        () => (
+          <TextArea
+            rows={10}
+            cols={50}
+            value={currentContent}
+            disabled={readyState !== ReadyState.OPEN}
+            onChange={handleInputChange}
+            ref={textareaRef}
+            onKeyUp={() => {
+              const selection =
+                textareaRef.current?.resizableTextArea?.textArea.selectionStart;
+              if (selection) {
+                setCursorPosition(selection);
+              }
+            }}
+          />
+        ),
+        [readyState, currentContent],
+      )}
     </div>
   );
 };
