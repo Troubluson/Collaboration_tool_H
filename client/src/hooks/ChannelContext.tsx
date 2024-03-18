@@ -1,28 +1,26 @@
-import {
-  ReactNode,
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-import { IChannelContext, IChannel } from '../@types/Channel';
-import axios from 'axios';
+import { ReactNode, createContext, useContext, useMemo, useState } from 'react';
+import { IChannelContext, IChannel, CreateChannelRequest } from '../@types/Channel';
 import { useUser } from './UserContext';
 import { IUser } from '../@types/User';
 import apiClient from '../api/apiClient';
 import { message } from 'antd';
+import { update } from 'lodash';
 
 export const ChannelContext = createContext<IChannelContext>({
+  channels: [],
   joinedChannels: [],
   availableChannels: [],
   currentChannel: null,
-  joinChannel: () => {},
+  joinExistingChannel: () => {},
+  createChannel: () => {},
   leaveChannel: () => {},
-  setChannel: () => {},
+  setCurrentChannel: () => {},
+  setChannels: () => {},
   userJoinChannel: () => {},
   userLeaveChannel: () => {},
   updateUserStatus: () => {},
+  channelCreated: () => {},
+  channelDeleted: () => {},
 });
 export const useChannel = (): IChannelContext => useContext(ChannelContext);
 
@@ -32,42 +30,83 @@ interface Props {
 
 export const ChannelProvider = ({ children }: Props) => {
   const { user } = useUser();
-  const [joinedChannels, setJoinedChannels] = useState<IChannel[]>([]);
-  const [availableChannels, setAvailableChannels] = useState<IChannel[]>([]);
+  const [channels, setChannels] = useState<IChannel[]>([]);
+  const availableChannels = useMemo(
+    () => channels.filter((ch) => ch.users.every((u) => u.id !== user?.id)),
+    [channels],
+  );
+  const joinedChannels = useMemo(
+    () => channels.filter((ch) => ch.users.some((u) => u.id === user?.id)),
+    [channels],
+  );
   const [currentChannel, setCurrentChannel] = useState<IChannel | null>(null);
 
-  const joinChannel = (channel: IChannel) => {
-    setJoinedChannels([...joinedChannels, channel]);
-    setAvailableChannels(availableChannels.filter((ch) => ch.id != channel.id));
+  const updateChannel = (channel: IChannel) => {
+    const index = channels.findIndex((e) => e.id === channel.id);
+    if (index === -1) message.error('Channel does not exist');
+    const newChannelList = [...channels];
+    newChannelList[index] = channel;
+    setChannels(newChannelList);
   };
 
+  const joinExistingChannel = async (channel: IChannel) => {
+    try {
+      const { data } = await apiClient.post<IChannel>(
+        `/channels/${channel.id}/join`,
+        user,
+      );
+      updateChannel(data);
+      setCurrentChannel(data);
+    } catch (error) {
+      message.error(`Could not join channel:\n ${(error as Error).message}`);
+    }
+  };
+
+  const createChannel = async (name: string) => {
+    try {
+      const { data: channel } = await apiClient.post<IChannel>(`/channels`, {
+        name,
+        userId: user?.id,
+      } as CreateChannelRequest);
+      const newChannelList = [...channels];
+      newChannelList.push(channel);
+      setChannels(newChannelList);
+      setCurrentChannel(channel);
+    } catch (error) {
+      message.error(`Could not create channel:\n ${(error as Error).message}`);
+    }
+  };
   const leaveChannel = async () => {
     if (!currentChannel) return;
     try {
-      apiClient.post<IChannel>(`$/channels/${currentChannel.id}/leave`, user);
-      setAvailableChannels([...availableChannels, currentChannel]);
-      setJoinedChannels(joinedChannels.filter((ch) => ch.id != currentChannel.id));
+      const res = await apiClient.post<IChannel>(
+        `/channels/${currentChannel.id}/leave`,
+        user,
+      );
+      updateChannel(res.data);
       setCurrentChannel(null);
     } catch (error) {
       message.error(`Could not leave channel:\n ${(error as Error).message}`);
     }
   };
 
-  const setChannel = (channel: IChannel) => setCurrentChannel({ ...channel, users: [] });
+  const channelCreated = (channel: IChannel) => {
+    // Channel already seen (created by user) - ignore event
+    if (channels.some((e) => e.id === channel.id)) return;
 
-  const fetchChannels = async () => {
-    try {
-      const { data } = await apiClient.get<IChannel[]>(`/channels`);
-      setAvailableChannels(
-        data.filter((channel) => channel.users.every((u) => u.id !== user?.id)),
-      );
-      setJoinedChannels(
-        data.filter((channel) => channel.users.some((u) => u.id === user?.id)),
-      );
-    } catch (error) {
-      message.error(`Could not get channels:\n ${(error as Error).message}`);
-    }
+    const newChannelList = [...channels];
+    newChannelList.push(channel);
+    setChannels(newChannelList);
   };
+
+  const channelDeleted = (channel: IChannel) => {
+    const newChannelList = [...channels];
+    const index = newChannelList.findIndex((e) => e.id === channel.id);
+    newChannelList.splice(index, 1);
+    setChannels(newChannelList);
+  };
+
+  const setChannel = (channel: IChannel) => setCurrentChannel({ ...channel, users: [] });
 
   const updateChannelUserList = (user: IUser, action: 'join' | 'leave') => {
     if (!currentChannel) return;
@@ -99,23 +138,24 @@ export const ChannelProvider = ({ children }: Props) => {
     setCurrentChannel({ ...currentChannel, users });
   };
 
-  useEffect(() => {
-    fetchChannels();
-  }, [user?.id]);
-
   return (
     <ChannelContext.Provider
       value={useMemo(
         () => ({
+          channels,
+          setChannels,
           joinedChannels,
           availableChannels,
-          joinChannel,
+          joinExistingChannel,
+          createChannel,
           leaveChannel,
           currentChannel,
-          setChannel,
+          setCurrentChannel: setChannel,
           userJoinChannel,
           userLeaveChannel,
           updateUserStatus,
+          channelCreated,
+          channelDeleted,
         }),
         [joinedChannels, availableChannels, currentChannel],
       )}

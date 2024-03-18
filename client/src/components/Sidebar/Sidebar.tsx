@@ -3,7 +3,6 @@ import type { MenuProps } from 'antd';
 import {
   Button,
   Flex,
-  Form,
   Input,
   Layout,
   Menu,
@@ -12,13 +11,18 @@ import {
   Typography,
   message,
 } from 'antd';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Logo } from '../Logo/Logo';
 import { useChannel } from '../../hooks/ChannelContext';
 import { useUser } from '../../hooks/UserContext';
-import { CreateChannelRequest, IChannel } from '../../@types/Channel';
+import {
+  CreateChannelRequest,
+  IChannel,
+  IChannelOperationEvents,
+} from '../../@types/Channel';
 import apiClient from '../../api/apiClient';
+import { BASE_URL } from '../../config';
 
 const { Sider } = Layout;
 
@@ -41,10 +45,22 @@ function getItem(
 }
 
 const SideBar = () => {
-  const { availableChannels, joinedChannels, setChannel, joinChannel } = useChannel();
+  const {
+    joinedChannels,
+    availableChannels,
+    setChannels,
+    setCurrentChannel,
+    joinExistingChannel,
+    createChannel,
+    channelCreated,
+    channelDeleted,
+  } = useChannel();
   const { user, logout } = useUser();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState('');
+  const [channelOpsEvent, setChannelOpsEvent] = useState<IChannelOperationEvents | null>(
+    null,
+  );
 
   const items: MenuProps['items'] = [
     getItem(
@@ -77,32 +93,61 @@ const SideBar = () => {
       return;
     }
     const channel = joinedChannels.find((channel) => channel.id === key);
-    channel && setChannel(channel);
+    channel && setCurrentChannel(channel);
   };
 
-  const createChannel = async () => {
-    try {
-      const { data: channel } = await apiClient.post<IChannel>(`/channels`, {
-        name,
-        userId: user?.id,
-      } as CreateChannelRequest);
-      joinChannel(channel);
-      setChannel(channel);
-      setIsModalOpen(false);
-    } catch (error) {
-      message.error(`Could not create channel:\n ${(error as Error).message}`);
+  const onChannelCreate = () => {
+    if (!name) {
+      message.error('Channel name is required');
+      return;
+    }
+    createChannel(name);
+    setIsModalOpen(false);
+    setName('');
+  };
+
+  const handleChannelEvents = (event: IChannelOperationEvents) => {
+    console.log(event);
+    switch (event.type) {
+      case 'channel_sync':
+        setChannels(event.content as IChannel[]);
+        break;
+      case 'channel_created':
+        channelCreated(event.content as IChannel);
+        break;
+      case 'channel_deleted':
+        channelDeleted(event.content as IChannel);
+        break;
+      default:
+        console.error('Unrecognized event', event.type);
     }
   };
 
-  const joinExistingChannel = async (channel: IChannel) => {
+  useEffect(() => {
+    if (!channelOpsEvent) return;
+    handleChannelEvents(channelOpsEvent);
+  }, [channelOpsEvent]);
+
+  useEffect(() => {
+    setChannels([]);
+    let eventSource: EventSource | null = null;
     try {
-      const res = await apiClient.post<IChannel>(`/channels/${channel.id}/join`, user);
-      joinChannel(res.data);
-      setChannel(res.data);
+      eventSource = new EventSource(`${BASE_URL}/channels`);
+      eventSource.onmessage = (e) => {
+        setChannelOpsEvent(JSON.parse(e.data));
+      };
+
+      eventSource.onerror = (e) => {
+        eventSource?.close();
+      };
     } catch (error) {
-      message.error(`Could not join channel:\n ${(error as Error).message}`);
+      eventSource?.close();
+      console.error('error', 'An unexpected error has occured', error);
     }
-  };
+    return () => {
+      eventSource?.close();
+    };
+  }, [user?.id]);
 
   return (
     <Sider
@@ -156,7 +201,7 @@ const SideBar = () => {
         title="Create Channel"
         open={isModalOpen}
         okButtonProps={{ disabled: !name }}
-        onOk={createChannel}
+        onOk={onChannelCreate}
         onCancel={() => setIsModalOpen(false)}
       >
         <Input

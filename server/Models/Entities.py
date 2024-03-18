@@ -44,6 +44,11 @@ class IChannel(BaseModel):
     name: str
     users: list[IUser] = []
     events: list[IChannelEvent] = []
+    deleted: bool = False
+
+class IChannelOperations(BaseModel):
+    type: Literal["channel_sync", "channel_created", "channel_deleted"]
+    content: Union[IChannel, list[IChannel]]
 
 class IWebSocketMessage(BaseModel):
     event: str

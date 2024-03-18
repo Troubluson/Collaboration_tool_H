@@ -7,7 +7,7 @@ import {
   IEditMessage,
   IWebSocketMessage,
   Operation,
-} from '../../@types/CollaborativeFile';
+} from '../../@types/CollaborativeFIle';
 import _ from 'lodash';
 import TextArea, { TextAreaRef } from 'antd/es/input/TextArea';
 import { useUser } from '../../hooks/UserContext';
