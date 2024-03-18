@@ -1,14 +1,10 @@
 import { Form, Input, Button, theme, message } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { Content } from 'antd/es/layout/layout';
-import axios from 'axios';
 import { IUser } from '../../@types/User';
 import { useUser } from '../../hooks/UserContext';
 import { useEffect } from 'react';
-import { ErrorResponse } from '../../@types/ErrorResponse';
 import apiClient from '../../api/apiClient';
-
-const serverBaseURL = 'http://localhost:8000';
 
 const Login = () => {
   const {

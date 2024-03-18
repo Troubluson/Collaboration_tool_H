@@ -13,8 +13,6 @@ import { IUser } from '../@types/User';
 import apiClient from '../api/apiClient';
 import { message } from 'antd';
 
-const serverBaseURL = 'http://localhost:8000';
-
 export const ChannelContext = createContext<IChannelContext>({
   joinedChannels: [],
   availableChannels: [],

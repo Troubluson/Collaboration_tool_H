@@ -12,11 +12,11 @@ import Message from './Message';
 import CollaborativeFileTab from '../CollaborativeFile/CollaborativeFileTab';
 import { RcFile } from 'antd/es/upload';
 import apiClient from '../../api/apiClient';
+import { BASE_URL } from '../../config';
 
 const { Title } = Typography;
 const { Header, Content } = Layout;
 
-const serverBaseURL = 'http://localhost:8000';
 const Channel = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
@@ -35,7 +35,7 @@ const Channel = () => {
         sender: user,
         channelId: currentChannel.id,
       };
-      await axios.post<IMessage>(`${serverBaseURL}/channel/message`, newMessage);
+      await apiClient.post<IMessage>(`/channel/message`, newMessage);
     } catch (error) {
       message.error(`Could not send message:\n ${(error as Error).message}`);
     }
@@ -90,7 +90,7 @@ const Channel = () => {
     if (!currentChannel || !user?.id) return;
     try {
       eventSource = new EventSource(
-        `${serverBaseURL}/stream/${currentChannel.id}?user_id=${user?.id}`,
+        `${BASE_URL}/stream/${currentChannel.id}?user_id=${user?.id}`,
       );
       eventSource.onmessage = (e) => {
         handleChannelEvents(JSON.parse(e.data));

@@ -14,6 +14,7 @@ import { useUser } from '../../hooks/UserContext';
 import { Button, Flex, Popconfirm, message } from 'antd';
 import { CloseOutlined, DeleteOutlined } from '@ant-design/icons';
 import apiClient from '../../api/apiClient';
+import { WS_BASE_URL } from '../../config';
 
 interface Props {
   documentId: string | null;
@@ -33,7 +34,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
   const path = `/channels/${currentChannel?.id}/collaborate/${documentId}`;
 
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    `ws://localhost:8000${path}`,
+    `${WS_BASE_URL}${path}`,
     {
       onOpen: () => console.log('websocket opened'),
       shouldReconnect: (closeEvent) => false,
