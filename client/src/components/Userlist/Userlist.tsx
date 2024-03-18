@@ -8,6 +8,7 @@ import Title from 'antd/es/typography/Title';
 import axios from 'axios';
 import { ILatencyMeasurement } from '../../@types/Measurement';
 import { useEffect, useState } from 'react';
+import apiClient from '../../api/apiClient';
 
 const textColor = '#a6aaae';
 
@@ -36,10 +37,8 @@ const UserList = () => {
 
   const getUserLatencies = () => {
     if (!currentChannel || !users.length || !user) return;
-    axios
-      .get<ILatencyMeasurement[]>(
-        `http://localhost:8000/channel/${currentChannel?.id}/latency`,
-      )
+    apiClient
+      .get<ILatencyMeasurement[]>(`/channel/${currentChannel?.id}/latency`)
       .then((response) => response.data)
       .then((latencies) => {
         if (!currentChannel) return;

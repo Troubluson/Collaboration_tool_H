@@ -6,8 +6,6 @@ import CollaborativeFile from './CollaborativeFile';
 import { IChannelEvent } from '../../@types/Channel';
 import apiClient from '../../api/apiClient';
 
-const serverBaseURL = 'http://localhost:8000';
-
 interface Props {
   documentEvent: IChannelEvent | null;
 }
@@ -25,9 +23,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
       return;
     }
     apiClient
-      .get<ICollaborativeFile[]>(
-        `${serverBaseURL}/channels/${currentChannel.id}/collaborate`,
-      )
+      .get<ICollaborativeFile[]>(`/channels/${currentChannel.id}/collaborate`)
       .then((res) => setFiles(res.data))
       .catch((error) => message.error(`Could not get files:\n ${error.message}`));
   }, [currentChannel?.id]);
@@ -39,7 +35,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
     }
     try {
       const { data } = await apiClient.post<ICollaborativeFile>(
-        `${serverBaseURL}/channels/${currentChannel?.id}/collaborate`,
+        `/channels/${currentChannel?.id}/collaborate`,
         {
           name: newFileName,
         },

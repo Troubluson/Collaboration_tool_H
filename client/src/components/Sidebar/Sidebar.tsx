@@ -12,17 +12,14 @@ import {
   Typography,
   message,
 } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { Logo } from '../Logo/Logo';
 import { useChannel } from '../../hooks/ChannelContext';
 import { useUser } from '../../hooks/UserContext';
-import axios, { AxiosError } from 'axios';
 import { CreateChannelRequest, IChannel } from '../../@types/Channel';
-import { ErrorResponse } from '../../@types/ErrorResponse';
 import apiClient from '../../api/apiClient';
 
-const serverBaseURL = 'http://localhost:8000';
 const { Sider } = Layout;
 
 type MenuItem = Required<MenuProps>['items'][number];
