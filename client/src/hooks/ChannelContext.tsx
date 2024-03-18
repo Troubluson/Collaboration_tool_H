@@ -4,7 +4,6 @@ import { useUser } from './UserContext';
 import { IUser } from '../@types/User';
 import apiClient from '../api/apiClient';
 import { message } from 'antd';
-import { update } from 'lodash';
 
 export const ChannelContext = createContext<IChannelContext>({
   channels: [],
@@ -106,8 +105,6 @@ export const ChannelProvider = ({ children }: Props) => {
     setChannels(newChannelList);
   };
 
-  const setChannel = (channel: IChannel) => setCurrentChannel({ ...channel, users: [] });
-
   const updateChannelUserList = (user: IUser, action: 'join' | 'leave') => {
     if (!currentChannel) return;
     const users = currentChannel.users;
@@ -150,7 +147,7 @@ export const ChannelProvider = ({ children }: Props) => {
           createChannel,
           leaveChannel,
           currentChannel,
-          setCurrentChannel: setChannel,
+          setCurrentChannel,
           userJoinChannel,
           userLeaveChannel,
           updateUserStatus,

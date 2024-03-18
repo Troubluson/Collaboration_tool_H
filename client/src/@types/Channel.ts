@@ -6,9 +6,11 @@ export interface IChannel {
   id: string;
   name: string;
   users: IUser[];
+  events: IChannelEvent[];
 }
 
 type IChannelEvents =
+  | 'channel_sync'
   | 'new_message'
   | 'user_join'
   | 'user_leave'
@@ -18,7 +20,7 @@ type IChannelEvents =
 
 export interface IChannelEvent {
   type: IChannelEvents;
-  content: IUser | IMessage | ICollaborativeFile;
+  content: IChannel | IUser | IMessage | ICollaborativeFile;
 }
 
 type IChannelOperations = 'channel_sync' | 'channel_created' | 'channel_deleted';

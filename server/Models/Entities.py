@@ -35,16 +35,16 @@ class ICollaborativeDocument(BaseModel):
     content: str
     operations: List[IOperation]
 
-class IChannelEvent(BaseModel):
-    type: Literal["new_message", "user_join", "user_leave", "user_status_change", "document_created", "document_deleted"]
-    content: Union[IUser, IMessage, ICollaborativeDocument, dict]
-
 class IChannel(BaseModel):
     id: Optional[str] = None
     name: str
     users: list[IUser] = []
-    events: list[IChannelEvent] = []
+    events: list = []
     deleted: bool = False
+
+class IChannelEvent(BaseModel):
+    type: Literal["channel_sync", "new_message", "user_join", "user_leave", "user_status_change", "document_created", "document_deleted"]
+    content: Union[IChannel, IUser, IMessage, ICollaborativeDocument, dict]
 
 class IChannelOperations(BaseModel):
     type: Literal["channel_sync", "channel_created", "channel_deleted"]

@@ -107,7 +107,6 @@ const SideBar = () => {
   };
 
   const handleChannelEvents = (event: IChannelOperationEvents) => {
-    console.log(event);
     switch (event.type) {
       case 'channel_sync':
         setChannels(event.content as IChannel[]);
