@@ -1,8 +1,8 @@
 import asyncio
-from collections import defaultdict
 import copy
+from tempfile import SpooledTemporaryFile
 from typing import List
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, File, Form, Request, Response, UploadFile
 
 from fastapi.responses import FileResponse
 from fastapi.encoders import jsonable_encoder
@@ -85,6 +85,35 @@ async def send_message(message: IMessage):
     event = IChannelEvent(type="new_message", content=message)
     channel.events.append(event)
     return event
+
+@app.post("/channel/file")
+async def send_file(senderId: str = Form(...), channelId: str = Form(...), file: UploadFile = File(...)):
+    channel = findFromList(channels, 'id', channelId)
+    if channel is None:
+        raise EntityDoesNotExist("Channel")
+    user = findFromList(users, 'id', senderId)
+    if user is None:
+        raise EntityDoesNotExist("User")
+    fileId = str(uuid4())
+    files[fileId] = await file.read()
+
+    message: IMessage = {
+        "id": str(uuid4()),
+        "content": file.filename,
+        "file": fileId,
+        "sender": user.id,
+        "channelId": channel.id
+    }
+    event = IChannelEvent(type="new_message", content=message)
+    channel.events.append(event)
+    return event
+
+@app.get("/file/{file_id}")
+async def get_file(file_id: str):
+    if file_id not in files:
+        raise EntityDoesNotExist("File")
+    file = files[file_id]
+    return Response(file)
 
 @app.post("/login")
 async def login(sentUser: IUser):

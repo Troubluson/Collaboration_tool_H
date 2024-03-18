@@ -12,6 +12,7 @@ class IUser(BaseModel):
 class IMessage(BaseModel):
     id: Optional[str] = None
     content: str
+    file: Optional[str] = None
     sender: IUser
     channelId: str
 
