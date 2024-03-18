@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useChannel } from '../../hooks/ChannelContext';
-import { ICollaborativeFile } from '../../@types/CollaborativeFIle';
+import { ICollaborativeFile } from '../../@types/CollaborativeFile';
 import { Button, Flex, Input, Modal, Space, Typography, message } from 'antd';
 import CollaborativeFile from './CollaborativeFile';
 import { IChannelEvent } from '../../@types/Channel';

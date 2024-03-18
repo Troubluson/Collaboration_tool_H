@@ -1,4 +1,4 @@
-import { ICollaborativeFile } from './CollaborativeFIle';
+import { ICollaborativeFile } from './CollaborativeFile';
 import { IMessage } from './Message';
 import { IUser } from './User';
 
