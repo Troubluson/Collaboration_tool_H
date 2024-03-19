@@ -115,8 +115,9 @@ async def get_file(file_id: str):
     return Response(file)
 
 @app.post("/throughput")
-async def measure_throughput(start_time: str = Form(...), size: str = Form(...), file: UploadFile = File(...)):
+async def measure_throughput(request: Request, start_time: str = Form(...), file: UploadFile = File(...)):
     try:
+        size = int(request.headers.get('content-length'))
         end = datetime.now()
         data = await file.read()
         start = datetime.fromtimestamp(int(start_time) / 1000)
@@ -125,8 +126,7 @@ async def measure_throughput(start_time: str = Form(...), size: str = Form(...),
         return {
             'upload_throughput': str(MB/seconds),
             'start_time': str(datetime.now()),
-            'file': base64.b64encode(data),
-            'size': str(len(data))
+            'file': base64.b64encode(data)
         }
     except Exception as e:
         print(e)

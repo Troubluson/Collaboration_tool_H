@@ -53,7 +53,6 @@ export const UserProvider = ({ children }: Props) => {
       const formData = new FormData();
       formData.append('file', blob);
       formData.append('start_time', String(new Date().getTime()));
-      formData.append('size', String(blob.size));
 
       const { data, headers } = await apiClient.postForm('/throughput', formData);
 
