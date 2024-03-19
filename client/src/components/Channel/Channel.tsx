@@ -1,10 +1,9 @@
 import { Flex, Layout, Typography, Tabs, theme, message, Button } from 'antd';
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useChannel } from '../../hooks/ChannelContext';
 import { useUser } from '../../hooks/UserContext';
 import { IMessage } from '../../@types/Message';
-import { IChannelEvent } from '../../@types/Channel';
+import { IChannel, IChannelEvent } from '../../@types/Channel';
 import { IUser } from '../../@types/User';
 import { ApiOutlined } from '@ant-design/icons';
 import MessageInput from './MessageInput';
@@ -21,8 +20,13 @@ const Channel = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
-  const { currentChannel, userJoinChannel, userLeaveChannel, updateUserStatus } =
-    useChannel();
+  const {
+    currentChannel,
+    setCurrentChannel,
+    userJoinChannel,
+    userLeaveChannel,
+    updateUserStatus,
+  } = useChannel();
   const { user } = useUser();
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [newEvent, setNewEvent] = useState<IChannelEvent | null>(null);
@@ -62,6 +66,14 @@ const Channel = () => {
   useEffect(() => {
     if (!newEvent) return;
     switch (newEvent.type) {
+      case 'channel_sync':
+        const channel = newEvent.content as IChannel;
+        setCurrentChannel(channel);
+        const messageEvents = channel.events
+          .filter((e) => e.type === 'new_message')
+          .map((e) => e.content as IMessage);
+        setMessages(messageEvents);
+        break;
       case 'new_message':
         setMessages([...messages, newEvent.content as IMessage]);
         break;

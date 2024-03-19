@@ -58,8 +58,10 @@ async def event_stream(req: Request, channel_id: str, user_id: str):
     user.isActive = True
     channel.events.append(IChannelEvent(type="user_status_change", content=user))
     async def event_publisher():
-        events_seen = 0
         try:
+            events_seen = len(channel.events)
+            sync_event = IChannelEvent(type='channel_sync', content=channel)
+            yield serialize_message(sync_event)
             while True:
                 channel_events = channel.events
                 if events_seen < len(channel_events):
@@ -161,8 +163,24 @@ async def login(sentUser: IUser):
 
 
 @app.get("/channels")
-async def get_channels():
-    return channels
+async def get_channels(req: Request):
+    async def event_publisher():
+        events_seen = len(channel_operation_events)
+        try:
+            # Send initial channel list
+            event = IChannelOperations(type='channel_sync', content=[c for c in channels if not c.deleted])
+            yield serialize_message(event)
+            while True:
+                if events_seen < len(channel_operation_events):
+                    # Loop new events
+                    for event in channel_operation_events[events_seen:]:
+                        yield serialize_message(event)
+                    events_seen = len(channel_operation_events)
+                await asyncio.sleep(0.1)
+        except asyncio.CancelledError as e:
+          print(f"Disconnected from client (via refresh/close) {req.client}")
+          raise e
+    return EventSourceResponse(event_publisher())
 
 @app.post("/channels")
 async def create_channel(request: CreateChannelRequest):
@@ -172,11 +190,13 @@ async def create_channel(request: CreateChannelRequest):
 
     if user is None:
         raise InvalidSender()
-    if any(existingChannel for existingChannel in channels if existingChannel.name == channel_name):
+    if any(existingChannel for existingChannel in channels if existingChannel.name == channel_name and not existingChannel.deleted):
         raise AlreadyExists(what="Channel")
     
     channel = IChannel(id=str(uuid4()), name=channel_name)
     channels.append(channel)
+    event = IChannelOperations(type='channel_created', content=channel)
+    channel_operation_events.append(event)
     await join_channel(channel.id, user)
     return channel
 
@@ -203,6 +223,10 @@ async def leave_channel(channel_id, leaving_user: IUser):
     event = IChannelEvent(type="user_leave", content=user)
     channel.events.append(event)
     channel.users = [u for u in channel.users if u.id != user.id]
+    if len(channel.users) == 0:
+        event = IChannelOperations(type='channel_deleted', content=channel)
+        channel_operation_events.append(event)
+        channel.deleted = True
     return channel
 
 # Adds data to measurements dictionary for the user. There is no error handeling.

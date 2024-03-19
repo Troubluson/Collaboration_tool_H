@@ -6,25 +6,50 @@ export interface IChannel {
   id: string;
   name: string;
   users: IUser[];
+  events: IChannelEvent[];
 }
 
-type IChannelEvents = 'new_message' | 'user_join' | 'user_leave' | 'user_status_change' | 'document_created' | 'document_deleted';
+type IChannelEvents =
+  | 'channel_sync'
+  | 'new_message'
+  | 'user_join'
+  | 'user_leave'
+  | 'user_status_change'
+  | 'document_created'
+  | 'document_deleted';
 
 export interface IChannelEvent {
   type: IChannelEvents;
-  content: IUser | IMessage | ICollaborativeFile;
+  content: IChannel | IUser | IMessage | ICollaborativeFile;
 }
 
+type IChannelOperations = 'channel_sync' | 'channel_created' | 'channel_deleted';
+
+export type IChannelOperationEvents =
+  | {
+      type: Omit<IChannelOperations, 'channel_sync'>;
+      content: IChannel;
+    }
+  | {
+      type: Extract<IChannelOperations, 'channel_sync'>;
+      content: IChannel[];
+    };
+
 export interface IChannelContext {
+  channels: IChannel[];
   availableChannels: IChannel[];
   joinedChannels: IChannel[];
+  setChannels: (channels: IChannel[]) => void;
   currentChannel: IChannel | null;
-  setChannel: (channel: IChannel) => void;
-  joinChannel: (channel: IChannel) => void;
+  setCurrentChannel: (channel: IChannel) => void;
+  joinExistingChannel: (channel: IChannel) => void;
+  createChannel: (channe: string) => void;
   leaveChannel: () => void;
   userJoinChannel: (user: IUser) => void;
   userLeaveChannel: (user: IUser) => void;
   updateUserStatus: (user: IUser) => void;
+  channelCreated: (channel: IChannel) => void;
+  channelDeleted: (channel: IChannel) => void;
 }
 
 export interface CreateChannelRequest {
