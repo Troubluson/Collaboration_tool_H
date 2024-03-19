@@ -17,7 +17,7 @@ from Models.Exceptions import AlreadyExists, BadParameters, EntityDoesNotExist, 
 from Models.Entities import IChannelEvent, IMeasurement, IMessage, IWebSocketMessage
 from utils.helpers import findFromList
 from datetime import datetime
-from requests_toolbelt import MultipartEncoder
+import base64
 
 app = FastAPI()
 app.include_router(collaborate_router)
@@ -116,17 +116,20 @@ async def get_file(file_id: str):
 
 @app.post("/throughput")
 async def measure_throughput(start_time: str = Form(...), size: str = Form(...), file: UploadFile = File(...)):
-    end = datetime.now()
-    data = await file.read()
-    start = datetime.fromtimestamp(int(start_time) / 1000)
-    seconds = (end-start).total_seconds()
-    MB = int(size) / 1000000
-    m = MultipartEncoder(
-           fields={'upload_throughput': str(MB/seconds), 'start_time': str(datetime.now()),
-                   'file': data,
-                   'size': str(len(data))}
-        )
-    return Response(m.to_string(), media_type=m.content_type)
+    try:
+        end = datetime.now()
+        data = await file.read()
+        start = datetime.fromtimestamp(int(start_time) / 1000)
+        seconds = (end-start).total_seconds()
+        MB = int(size) / 1000000
+        return {
+            'upload_throughput': str(MB/seconds),
+            'start_time': str(datetime.now()),
+            'file': base64.b64encode(data),
+            'size': str(len(data))
+        }
+    except Exception as e:
+        print(e)
 
 @app.post("/login")
 async def login(sentUser: IUser):
