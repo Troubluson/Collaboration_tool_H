@@ -1,4 +1,4 @@
-import { useState, useEffect, ChangeEvent, useRef, useMemo } from 'react';
+import { useState, useEffect, ChangeEvent, useRef, useMemo, useCallback } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useChannel } from '../../hooks/ChannelContext';
 import {
@@ -29,6 +29,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
   const [currentContent, setCurrentContent] = useState<string>('');
   const [revision, setRevision] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
+  const [forceUpdate, setForceUpdate] = useState(false);
   const { currentChannel } = useChannel();
   const { user } = useUser();
   const textareaRef = useRef<null | TextAreaRef>(null);
@@ -42,14 +43,14 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
     },
   );
 
-  const deleteDocument = () => {
+  const deleteDocument = useCallback(() => {
     apiClient
       .delete(path)
       .then(onDelete)
       .catch((error) =>
         message.error(`Could not delete document:\n ${(error as Error).message}`),
-      ); //Todo better error handling
-  };
+      );
+  }, [currentChannel?.id]);
 
   useEffect(() => {
     if (lastJsonMessage) {
@@ -81,33 +82,43 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
     }
   }, [readyState]);
 
-  const handleChange = (operation: Operation) => {
-    let text = originalContent;
-    let cursorPos = cursorPosition;
-    if (operation.type === 'insert') {
-      const firstSlice = originalContent.slice(0, operation.index) + operation.text;
-      const secondSlice = originalContent.slice(operation.index);
-      text = firstSlice + secondSlice;
-      cursorPos = cursorPos + (operation.index < cursorPos ? operation.text.length : 0);
-    } else if (operation.type === 'delete') {
-      const firstSlice = originalContent.slice(0, operation.index);
-      const secondSlice = originalContent.slice(operation.index + operation.text.length);
-      text = firstSlice + secondSlice;
-      cursorPos = cursorPos - (operation.index < cursorPos ? operation.text.length : 0);
-    }
-    if (text !== currentContent) {
-      setCursorPosition(cursorPos);
-      setCurrentContent(text);
-    }
-    setOriginalContent(text);
-  };
-
+  const handleChange = useMemo(
+    () => (operation: Operation) => {
+      let text = originalContent;
+      let cursorPos = cursorPosition;
+      if (operation.type === 'insert') {
+        const firstSlice = originalContent.slice(0, operation.index) + operation.text;
+        const secondSlice = originalContent.slice(operation.index);
+        text = firstSlice + secondSlice;
+        cursorPos = cursorPos + (operation.index < cursorPos ? operation.text.length : 0);
+      } else if (operation.type === 'delete') {
+        const firstSlice = originalContent.slice(0, operation.index);
+        const secondSlice = originalContent.slice(
+          operation.index + operation.text.length,
+        );
+        text = firstSlice + secondSlice;
+        cursorPos = cursorPos - (operation.index < cursorPos ? operation.text.length : 0);
+      }
+      const newCursorPos = Math.max(cursorPos, 0);
+      if (text !== currentContent) {
+        console.log(newCursorPos);
+        setCursorPosition(newCursorPos);
+        setCurrentContent(text);
+        setForceUpdate(true);
+      }
+      setOriginalContent(text);
+    },
+    [lastJsonMessage],
+  );
   useEffect(() => {
-    //if (!isTypingRef.current) {
-    const textArea = textareaRef.current?.resizableTextArea?.textArea;
-    textArea?.setSelectionRange(cursorPosition, cursorPosition);
-    //}
-  }, [cursorPosition]);
+    if (textareaRef.current?.resizableTextArea && forceUpdate) {
+      textareaRef.current.resizableTextArea.textArea.setSelectionRange(
+        cursorPosition,
+        cursorPosition,
+      );
+    }
+    setForceUpdate(false);
+  }, [cursorPosition, forceUpdate]);
 
   const handleInputChange = ({ target }: ChangeEvent<HTMLTextAreaElement>): void => {
     const textArea = textareaRef.current?.resizableTextArea?.textArea;
@@ -142,6 +153,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
         text: change,
       },
     } as IEditMessage;
+    setRevision(revision + 1);
     sendJsonMessage(message);
     setCurrentContent(newContent);
   };
@@ -152,54 +164,55 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
         <Flex justify="space-between" align="center" style={{ marginInline: '2rem' }}>
           <h1>{documentName}</h1>
 
-          {currentChannel && (
-            <div>
-              <Button
-                type="primary"
-                shape="default"
-                icon={<CloseOutlined rev={undefined} />}
-                size="middle"
-                onClick={onClose}
-              >
-                Close
-              </Button>
-              <Popconfirm
-                title={`delete ${documentName}?`}
-                description={
-                  'are you sure you want to delete the document? This operation cannot be reversed'
-                }
-                onConfirm={deleteDocument}
-              >
-                <Button
-                  type="primary"
-                  shape="default"
-                  icon={<DeleteOutlined rev={undefined} />}
-                  danger
-                  size="middle"
-                >
-                  Delete
-                </Button>
-              </Popconfirm>
-            </div>
-          )}
+          {currentChannel &&
+            useMemo(
+              () => (
+                <div>
+                  <Button
+                    type="primary"
+                    shape="default"
+                    icon={<CloseOutlined rev={undefined} />}
+                    size="middle"
+                    onClick={onClose}
+                  >
+                    Close
+                  </Button>
+                  <Popconfirm
+                    title={`delete ${documentName}?`}
+                    description={
+                      'are you sure you want to delete the document? This operation cannot be reversed'
+                    }
+                    onConfirm={deleteDocument}
+                  >
+                    <Button
+                      type="primary"
+                      shape="default"
+                      icon={<DeleteOutlined rev={undefined} />}
+                      danger
+                      size="middle"
+                    >
+                      Delete
+                    </Button>
+                  </Popconfirm>
+                </div>
+              ),
+              [currentChannel, documentId],
+            )}
         </Flex>
       </div>
       {useMemo(
         () => (
           <TextArea
+            key={documentId}
             rows={10}
             cols={50}
             value={currentContent}
             disabled={readyState !== ReadyState.OPEN}
             onChange={handleInputChange}
             ref={textareaRef}
-            onKeyUp={() => {
-              const selection =
-                textareaRef.current?.resizableTextArea?.textArea.selectionStart;
-              if (selection) {
-                setCursorPosition(selection);
-              }
-            }}
+            onSelect={({ currentTarget }) =>
+              setCursorPosition(currentTarget.selectionStart)
+            }
           />
         ),
         [readyState, currentContent],
