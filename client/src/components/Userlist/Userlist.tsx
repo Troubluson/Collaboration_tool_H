@@ -1,11 +1,10 @@
 import Sider from 'antd/es/layout/Sider';
 import { IUser } from '../../@types/User';
 import { useUser } from '../../hooks/UserContext';
-import { Avatar, List, Tooltip, message, theme } from 'antd';
+import { Avatar, List, Tooltip } from 'antd';
 import { CheckCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
 import { useChannel } from '../../hooks/ChannelContext';
 import Title from 'antd/es/typography/Title';
-import axios from 'axios';
 import { ILatencyMeasurement } from '../../@types/Measurement';
 import { useEffect, useState } from 'react';
 import apiClient from '../../api/apiClient';
@@ -33,7 +32,7 @@ const UserList = () => {
 
   useEffect(() => {
     getUserLatencies();
-    setInterval(() => getUserLatencies(), 30000);
+    setInterval(() => getUserLatencies(), 15000);
   }, [users]);
 
   const getUserLatencies = () => {

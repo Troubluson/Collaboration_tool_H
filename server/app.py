@@ -1,7 +1,7 @@
 import asyncio
 import copy
 from typing import List
-from fastapi import FastAPI, File, Form, Request, Response, UploadFile
+from fastapi import FastAPI, File, Form, Request, Response, UploadFile, WebSocket, WebSocketDisconnect
 
 from fastapi.responses import FileResponse
 from fastapi.encoders import jsonable_encoder
@@ -9,11 +9,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sse_starlette import EventSourceResponse
 from uuid import uuid4
+from utils.WebSocketConnectionManager import WebSocketConnectionManager
 from state import *
 from Routers.CollaborativeDocument import collaborate_router
 from Models.Requests import CreateChannelRequest, LatencyRequest
 from Models.Exceptions import AlreadyExists, BadParameters, EntityDoesNotExist, InvalidSender
-from Models.Entities import IChannelEvent, IMeasurement, IMessage
+from Models.Entities import IChannelEvent, IMeasurement, IMessage, IWebSocketMessage
 from utils.helpers import findFromList
 
 app = FastAPI()
@@ -194,11 +195,22 @@ async def receive_data(user_id: str, body: LatencyRequest):
     user_to_latency[user_id] = body.latency
     return ""
 
-   
+manager = WebSocketConnectionManager()
 # Made to enable latency testing. Not tested
-@app.get("/latency")
-async def get_test():
-    return {"message": "Pong"}
+@app.websocket("/latency")
+async def get_test(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            message: IWebSocketMessage = await websocket.receive_json()
+            match message["event"]:
+                case "ping":
+                    await manager.broadcast({"event": "pong", "data": message["data"]})
+                case _:
+                    print("Noop")
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+        await manager.send_message("Bye!!!", websocket)
 
 # returns a file for throughput testing. Tested to work with wget.
 @app.get("/throughput")
