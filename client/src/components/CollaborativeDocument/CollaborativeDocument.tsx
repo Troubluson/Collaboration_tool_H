@@ -3,8 +3,7 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useChannel } from '../../hooks/ChannelContext';
 import {
   IChangeMessage,
-  IDocumentMessage,
-  IEditMessage,
+  ISyncMessage,
   IErrorMessage,
   IWebSocketMessage,
   Operation,
@@ -12,7 +11,7 @@ import {
 import _ from 'lodash';
 import TextArea, { TextAreaRef } from 'antd/es/input/TextArea';
 import { useUser } from '../../hooks/UserContext';
-import { Button, Flex, Popconfirm, message } from 'antd';
+import { Button, Flex, Popconfirm, Typography, message } from 'antd';
 import { CloseOutlined, DeleteOutlined } from '@ant-design/icons';
 import apiClient from '../../api/apiClient';
 import { WS_BASE_URL } from '../../config';
@@ -24,7 +23,12 @@ interface Props {
   onDelete: () => void;
 }
 
-const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Props) => {
+const CollaborativeDocument = ({
+  documentId,
+  documentName,
+  onClose,
+  onDelete,
+}: Props) => {
   const [originalContent, setOriginalContent] = useState<string>('');
   const [currentContent, setCurrentContent] = useState<string>('');
   const [revision, setRevision] = useState(0);
@@ -55,18 +59,24 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
   useEffect(() => {
     if (lastJsonMessage) {
       const websocketMessage: IWebSocketMessage = JSON.parse(lastJsonMessage);
-      if (websocketMessage.event === 'document') {
-        const syncMessage = websocketMessage as IDocumentMessage;
-        setCurrentContent(syncMessage.data.content);
-        setOriginalContent(syncMessage.data.content);
-        setRevision(syncMessage.data.revision);
-      } else if (websocketMessage.event === 'change') {
-        const changeMessage = websocketMessage as IChangeMessage;
-        handleChange(changeMessage.data.operation);
-        setRevision(changeMessage.data.revision);
-      } else if (websocketMessage.event === 'error') {
-        const errorMessage = websocketMessage as IErrorMessage;
-        message.error(errorMessage.data.reason);
+      switch (websocketMessage.event) {
+        case 'sync_document':
+          const syncMessage = websocketMessage as ISyncMessage;
+          setCurrentContent(syncMessage.data.content);
+          setOriginalContent(syncMessage.data.content);
+          setRevision(syncMessage.data.revision);
+          break;
+        case 'change':
+          const changeMessage = websocketMessage as IChangeMessage;
+          handleChange(changeMessage.data.operation);
+          setRevision(changeMessage.data.revision);
+          break;
+        case 'error':
+          const errorMessage = websocketMessage as IErrorMessage;
+          message.error(errorMessage.data.reason);
+          break;
+        default:
+          break;
       }
     }
   }, [lastJsonMessage]);
@@ -144,15 +154,17 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
     );
 
     const message = {
-      event: 'edit',
+      event: 'change',
       data: {
-        type: isInsert ? 'insert' : 'delete',
-        index: changeStart,
-        userId: user?.id ?? '',
+        operation: {
+          type: isInsert ? 'insert' : 'delete',
+          index: changeStart,
+          userId: user?.id ?? '',
+          text: change,
+        } as Operation,
         revision: revision + 1,
-        text: change,
       },
-    } as IEditMessage;
+    } as IChangeMessage;
     setRevision(revision + 1);
     sendJsonMessage(message);
     setCurrentContent(newContent);
@@ -202,18 +214,23 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
       </div>
       {useMemo(
         () => (
-          <TextArea
-            key={documentId}
-            rows={10}
-            cols={50}
-            value={currentContent}
-            disabled={readyState !== ReadyState.OPEN}
-            onChange={handleInputChange}
-            ref={textareaRef}
-            onSelect={({ currentTarget }) =>
-              setCursorPosition(currentTarget.selectionStart)
-            }
-          />
+          <>
+            {readyState !== ReadyState.OPEN && (
+              <Typography>Not connected to document</Typography>
+            )}
+            <TextArea
+              key={documentId}
+              rows={10}
+              cols={50}
+              value={currentContent}
+              disabled={readyState !== ReadyState.OPEN}
+              onChange={handleInputChange}
+              ref={textareaRef}
+              onSelect={({ currentTarget }) =>
+                setCursorPosition(currentTarget.selectionStart)
+              }
+            />
+          </>
         ),
         [readyState, currentContent],
       )}
@@ -221,4 +238,4 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
   );
 };
 
-export default CollaborativeFile;
+export default CollaborativeDocument;

@@ -61,7 +61,7 @@ async def collaborative_file(channel_id: str, document_id: str, websocket: WebSo
         while True:
             message: IWebSocketMessage = await websocket.receive_json()
             match message["event"]:
-                case "edit":
+                case "change":
                     await handleEditEvent(message, document)
                 case "sync_document":
                     await handleSyncEvent(message, document, websocket)
@@ -69,21 +69,22 @@ async def collaborative_file(channel_id: str, document_id: str, websocket: WebSo
                     print("Noop")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-        await manager.send_message("Bye!!!", websocket)
+        await manager.send_message("Disconnected", websocket)
     except ValueError:
         await manager.send_json_message(ErrorEvent(data=ErrorData(reason="Operation is not of correct type")).model_dump_json(), websocket)
-    except:
+    except Exception as ex:
+        print(ex)
         await manager.send_json_message(ErrorEvent(data=ErrorData(reason="An unknown error occured")).model_dump_json(), websocket)
 
 
 async def handleEditEvent(message: IWebSocketMessage, document: ICollaborativeDocument):
     new_operation_event = OperationEvent(**message['data'])
+    new_text_op = TextOperation(new_operation_event.operation.type, new_operation_event.operation.index, new_operation_event.operation.text)
     
-    new_text_op = TextOperation(new_operation_event.type, new_operation_event.index, new_operation_event.text)
     # revision is the version the client thinks they are editing
     concurrent_operations = document.operations[new_operation_event.revision:]
     new_text_op = OperationalTransform.apply_concurrent_operations(new_text_op, concurrent_operations)
-    new_op = new_text_op.toOperation(new_operation_event.userId)
+    new_op = new_text_op.toOperation(new_operation_event.operation.userId)
     document.content = new_text_op.apply(document.content)
     document.operations.append(new_op)
 

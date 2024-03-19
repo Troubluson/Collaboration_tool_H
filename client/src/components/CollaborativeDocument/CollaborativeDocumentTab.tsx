@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useChannel } from '../../hooks/ChannelContext';
-import { ICollaborativeFile } from '../../@types/CollaborativeDocument';
+import { ICollaborativeDocument } from '../../@types/CollaborativeDocument';
 import { Button, Flex, Input, Modal, Space, Typography, message } from 'antd';
-import CollaborativeFile from './CollaborativeFile';
+import CollaborativeFile from './CollaborativeDocument';
 import { IChannelEvent } from '../../@types/Channel';
 import apiClient from '../../api/apiClient';
 
@@ -10,9 +10,9 @@ interface Props {
   documentEvent: IChannelEvent | null;
 }
 
-const CollaborativeFileTab = ({ documentEvent }: Props) => {
+const CollaborativeDocumentTab = ({ documentEvent }: Props) => {
   const { currentChannel } = useChannel();
-  const [files, setFiles] = useState<ICollaborativeFile[]>([]);
+  const [files, setFiles] = useState<ICollaborativeDocument[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [openFile, setOpenFile] = useState<string | null>(null);
@@ -23,7 +23,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
       return;
     }
     apiClient
-      .get<ICollaborativeFile[]>(`/channels/${currentChannel.id}/collaborate`)
+      .get<ICollaborativeDocument[]>(`/channels/${currentChannel.id}/collaborate`)
       .then((res) => setFiles(res.data))
       .catch((error) => message.error(`Could not get files:\n ${error.message}`));
   }, [currentChannel?.id]);
@@ -34,7 +34,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
       return;
     }
     try {
-      const { data } = await apiClient.post<ICollaborativeFile>(
+      const { data } = await apiClient.post<ICollaborativeDocument>(
         `/channels/${currentChannel?.id}/collaborate`,
         {
           name: newFileName,
@@ -53,7 +53,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
   useEffect(() => {
     switch (documentEvent?.type) {
       case 'document_deleted':
-        const documentId = (documentEvent.content as ICollaborativeFile).id;
+        const documentId = (documentEvent.content as ICollaborativeDocument).id;
         setFiles(files.filter((file) => file.id !== documentId));
         if (openFile === documentId) {
           setOpenFile(null);
@@ -61,7 +61,7 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
         }
         break;
       case 'document_created':
-        setFiles([...files, documentEvent.content as ICollaborativeFile]);
+        setFiles([...files, documentEvent.content as ICollaborativeDocument]);
         break;
       default:
         break;
@@ -121,4 +121,4 @@ const CollaborativeFileTab = ({ documentEvent }: Props) => {
   );
 };
 
-export default CollaborativeFileTab;
+export default CollaborativeDocumentTab;

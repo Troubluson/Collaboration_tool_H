@@ -8,7 +8,7 @@ import { IUser } from '../../@types/User';
 import { ApiOutlined } from '@ant-design/icons';
 import MessageInput from './MessageInput';
 import Message from './Message';
-import CollaborativeFileTab from '../CollaborativeFile/CollaborativeFileTab';
+import CollaborativeDocumentTab from '../CollaborativeDocument/CollaborativeDocumentTab';
 import { RcFile } from 'antd/es/upload';
 import apiClient from '../../api/apiClient';
 import { BASE_URL } from '../../config';
@@ -168,7 +168,7 @@ const Channel = () => {
               key: 'docs',
               label: 'docs',
               children: (
-                <CollaborativeFileTab
+                <CollaborativeDocumentTab
                   documentEvent={
                     ['document_created', 'document_deleted'].includes(
                       newEvent?.type ?? '',
