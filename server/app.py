@@ -42,11 +42,6 @@ async def validation_exception_handler(request, exc):
         ),
     )
 
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
 @app.get("/stream/{channel_id}")
 async def event_stream(req: Request, channel_id: str, user_id: str):
     channel = findFromList(channels, 'id', channel_id)

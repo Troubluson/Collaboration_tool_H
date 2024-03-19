@@ -20,6 +20,12 @@ class SyncEvent(BaseModel):
     event: Optional[str] = "document"
     data: SyncData
 
+class ErrorData(BaseModel):
+    reason: str
+class ErrorEvent(BaseModel):
+    event: Optional[str] = "error"
+    data: ErrorData
+
 class OperationEvent(BaseModel):
     userId: str
     type: str

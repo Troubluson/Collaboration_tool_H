@@ -27,7 +27,7 @@ class IOperation(BaseModel):
         elif self.type == 'delete':
             return doc[:self.position] + doc[self.position + len(self.text):]
         else:
-            raise ValueError("Invalid operation type")
+            raise ValueError(f"Invalid operation type {self.type}")
 class ICollaborativeDocument(BaseModel):
     id: Optional[str] = None
     channelId: str
