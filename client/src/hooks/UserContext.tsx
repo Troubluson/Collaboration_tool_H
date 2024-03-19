@@ -60,8 +60,8 @@ export const UserProvider = ({ children }: Props) => {
 
       const size = Number(headers['content-length']);
       const upload = Number(Number(data.upload_throughput).toFixed(2));
-      const start = new Date(data.start_time);
-      const ms = Number(end) - Number(start);
+      const start = Number(data.start_time);
+      const ms = end.getTime() - start;
       const seconds = ms / 1000;
       const MB = size / 1000000;
       const download = Number((MB / seconds).toFixed(2));
