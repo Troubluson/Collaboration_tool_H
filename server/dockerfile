@@ -10,6 +10,7 @@ COPY requirements.txt .
 # Install server dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+ENV TZ="Europe/Helsinki"
 # Copy the rest of the server code into the container
 COPY . /app
 

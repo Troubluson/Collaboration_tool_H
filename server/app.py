@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import time
 from typing import List
 from fastapi import FastAPI, File, Form, Request, Response, UploadFile, WebSocket, WebSocketDisconnect
 
@@ -125,7 +126,7 @@ async def measure_throughput(request: Request, start_time: str = Form(...), file
         MB = int(size) / 1000000
         return {
             'upload_throughput': str(MB/seconds),
-            'start_time': str(datetime.now()),
+            'start_time': time.time() * 1000,
             'file': base64.b64encode(data)
         }
     except Exception as e:
