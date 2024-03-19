@@ -173,7 +173,7 @@ async def create_channel(request: CreateChannelRequest):
 
     if user is None:
         raise InvalidSender()
-    if any(existingChannel for existingChannel in channels if existingChannel.name == channel_name):
+    if any(existingChannel for existingChannel in channels if existingChannel.name == channel_name and not existingChannel.deleted):
         raise AlreadyExists(what="Channel")
     
     channel = IChannel(id=str(uuid4()), name=channel_name)
