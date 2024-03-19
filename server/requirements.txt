@@ -3,3 +3,4 @@ hypercorn
 sse-starlette
 websocket
 python-multipart
+requests_toolbelt

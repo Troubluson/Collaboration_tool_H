@@ -49,10 +49,6 @@ class IWebSocketMessage(BaseModel):
     event: str
     data: dict
 
-class LatencyThroughputData(BaseModel):
-    latency: float
-    throughput: float
-
 class IMeasurement(BaseModel):
     user_id: str
     latency: float
