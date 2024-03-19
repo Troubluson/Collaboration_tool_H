@@ -55,7 +55,7 @@ const SideBar = () => {
     channelCreated,
     channelDeleted,
   } = useChannel();
-  const { user, logout } = useUser();
+  const { user, logout, measureThroughput, downloadThroughput, uploadThroughput } = useUser();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState('');
   const [channelOpsEvent, setChannelOpsEvent] = useState<IChannelOperationEvents | null>(
@@ -194,6 +194,77 @@ const SideBar = () => {
             Logout
           </Button>
         </Space>
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '5rem',
+          paddingInline: '1.5rem',
+          width: '100%',
+          display: 'flex',
+        }}
+      >
+        <Flex justify="center" vertical>
+          <Flex style={{ marginBottom: '0.5rem' }}>
+            <Typography
+              style={{
+                color: 'whitesmoke',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                marginRight: '1rem',
+                textWrap: 'nowrap',
+              }}
+            >
+              Throughput
+            </Typography>
+            <Button ghost size="small" onClick={measureThroughput}>
+              Measure
+            </Button>
+          </Flex>
+          <Flex vertical>
+            <Flex justify="space-between" style={{ paddingInline: '1rem' }}>
+              <Typography
+                style={{
+                  color: 'whitesmoke',
+                  fontSize: '10px',
+                }}
+              >
+                Upload
+              </Typography>
+              {uploadThroughput && (
+                <Typography
+                  style={{
+                    color: 'whitesmoke',
+                    fontSize: '10px',
+                  }}
+                >
+                  {uploadThroughput} MB/s
+                </Typography>
+              )}
+            </Flex>
+            <Flex justify="space-between" style={{ paddingInline: '1rem' }}>
+              <Typography
+                style={{
+                  color: 'whitesmoke',
+                  fontSize: '10px',
+                }}
+              >
+                Download
+              </Typography>
+              {downloadThroughput && (
+                <Typography
+                  style={{
+                    color: 'whitesmoke',
+                    fontSize: '10px',
+                  }}
+                >
+                  {downloadThroughput} MB/s
+                </Typography>
+              )}
+            </Flex>
+          </Flex>
+        </Flex>
       </div>
 
       <Modal

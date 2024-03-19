@@ -1,7 +1,7 @@
 import asyncio
 import copy
 from typing import List
-from fastapi import FastAPI, File, Form, Request, Response, UploadFile
+from fastapi import FastAPI, File, Form, Request, Response, UploadFile, WebSocket, WebSocketDisconnect
 
 from fastapi.responses import FileResponse
 from fastapi.encoders import jsonable_encoder
@@ -9,12 +9,15 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sse_starlette import EventSourceResponse
 from uuid import uuid4
+from utils.WebSocketConnectionManager import WebSocketConnectionManager
 from state import *
 from Routers.CollaborativeDocument import collaborate_router
 from Models.Requests import CreateChannelRequest, LatencyRequest
 from Models.Exceptions import AlreadyExists, BadParameters, EntityDoesNotExist, InvalidSender
-from Models.Entities import IChannelEvent, IMeasurement, IMessage
+from Models.Entities import IChannelEvent, IMeasurement, IMessage, IWebSocketMessage
 from utils.helpers import findFromList
+from datetime import datetime
+from requests_toolbelt import MultipartEncoder
 
 app = FastAPI()
 app.include_router(collaborate_router)
@@ -115,6 +118,20 @@ async def get_file(file_id: str):
         raise EntityDoesNotExist("File")
     file = files[file_id]
     return Response(file)
+
+@app.post("/throughput")
+async def measure_throughput(start_time: str = Form(...), size: str = Form(...), file: UploadFile = File(...)):
+    end = datetime.now()
+    data = await file.read()
+    start = datetime.fromtimestamp(int(start_time) / 1000)
+    seconds = (end-start).total_seconds()
+    MB = int(size) / 1000000
+    m = MultipartEncoder(
+           fields={'upload_throughput': str(MB/seconds), 'start_time': str(datetime.now()),
+                   'file': data,
+                   'size': str(len(data))}
+        )
+    return Response(m.to_string(), media_type=m.content_type)
 
 @app.post("/login")
 async def login(sentUser: IUser):
@@ -218,17 +235,22 @@ async def receive_data(user_id: str, body: LatencyRequest):
     user_to_latency[user_id] = body.latency
     return ""
 
-   
+manager = WebSocketConnectionManager()
 # Made to enable latency testing. Not tested
-@app.get("/latency")
-async def get_test():
-    return {"message": "Pong"}
-
-# returns a file for throughput testing. Tested to work with wget.
-@app.get("/throughput")
-async def get_test():
-    # returns some file
-    return FileResponse("ping_file.png", filename="ping_file.png")
+@app.websocket("/latency")
+async def get_test(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            message: IWebSocketMessage = await websocket.receive_json()
+            match message["event"]:
+                case "ping":
+                    await manager.send_json_message({"event": "pong", "data": message["data"]}, websocket)
+                case _:
+                    print("Noop")
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+        await manager.send_message("Bye!!!", websocket)
 
 # Gets channel id and returns all user measurements. Not tested
 @app.get("/channel/{channel_id}/latency")

@@ -1,4 +1,4 @@
 export interface ILatencyMeasurement {
-    user_id: string,
-    latency: number | undefined
+  user_id: string;
+  latency: number | undefined;
 }
