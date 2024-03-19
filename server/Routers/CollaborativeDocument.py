@@ -1,7 +1,7 @@
 from uuid import uuid4
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from Models.Entities import IChannelEvent, IWebSocketMessage
-from Models.Events import ChangeData, ChangeEvent, OperationEvent, SyncData, SyncEvent
+from Models.Events import ChangeData, ChangeEvent, ErrorData, ErrorEvent, OperationEvent, SyncData, SyncEvent
 from Models.Exceptions import EntityDoesNotExist
 from Models.Requests import CreateFileRequest
 from utils.helpers import findFromList
@@ -70,6 +70,10 @@ async def collaborative_file(channel_id: str, document_id: str, websocket: WebSo
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.send_message("Bye!!!", websocket)
+    except ValueError:
+        await manager.send_json_message(ErrorEvent(data=ErrorData(reason="Operation is not of correct type")).model_dump_json(), websocket)
+    except:
+        await manager.send_json_message(ErrorEvent(data=ErrorData(reason="An unknown error occured")).model_dump_json(), websocket)
 
 
 async def handleEditEvent(message: IWebSocketMessage, document: ICollaborativeDocument):

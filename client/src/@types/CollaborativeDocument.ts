@@ -35,6 +35,13 @@ export interface IDocumentMessage extends IWebSocketMessage {
   };
 }
 
+export interface IErrorMessage extends IWebSocketMessage {
+  event: 'error',
+  data: {
+    reason: string
+  }
+}
+
 export interface ICollaborativeFile {
   id: string;
   channelId: string;

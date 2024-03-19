@@ -5,9 +5,10 @@ import {
   IChangeMessage,
   IDocumentMessage,
   IEditMessage,
+  IErrorMessage,
   IWebSocketMessage,
   Operation,
-} from '../../@types/CollaborativeFile';
+} from '../../@types/CollaborativeDocument';
 import _ from 'lodash';
 import TextArea, { TextAreaRef } from 'antd/es/input/TextArea';
 import { useUser } from '../../hooks/UserContext';
@@ -52,17 +53,19 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
 
   useEffect(() => {
     if (lastJsonMessage) {
-      const message: IWebSocketMessage = JSON.parse(lastJsonMessage);
-      if (message.event === 'document') {
-        const syncMessage = message as IDocumentMessage;
+      const websocketMessage: IWebSocketMessage = JSON.parse(lastJsonMessage);
+      if (websocketMessage.event === 'document') {
+        const syncMessage = websocketMessage as IDocumentMessage;
         setCurrentContent(syncMessage.data.content);
         setOriginalContent(syncMessage.data.content);
         setRevision(syncMessage.data.revision);
-      }
-      if (message.event === 'change') {
-        const changeMessage = message as IChangeMessage;
+      } else if (websocketMessage.event === 'change') {
+        const changeMessage = websocketMessage as IChangeMessage;
         handleChange(changeMessage.data.operation);
-        setRevision(changeMessage.data.revision ?? revision);
+        setRevision(changeMessage.data.revision);
+      } else if (websocketMessage.event === 'error') {
+        const errorMessage = websocketMessage as IErrorMessage;
+        message.error(errorMessage.data.reason);
       }
     }
   }, [lastJsonMessage]);
@@ -106,13 +109,14 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
     //}
   }, [cursorPosition]);
 
-  const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>): void => {
-    if (!textareaRef.current?.resizableTextArea) {
+  const handleInputChange = ({ target }: ChangeEvent<HTMLTextAreaElement>): void => {
+    const textArea = textareaRef.current?.resizableTextArea?.textArea;
+    if (!textArea) {
       console.error('no ref to textarea');
       return;
     }
-    const newContent: string = e.target.value;
-    const selectionStart = textareaRef.current.resizableTextArea?.textArea.selectionStart;
+    const newContent: string = target.value;
+    const selectionStart = textArea.selectionStart;
     const index = selectionStart;
     const changeLength = newContent.length - currentContent.length;
     const absChangeLen = Math.abs(changeLength);
@@ -139,7 +143,7 @@ const CollaborativeFile = ({ documentId, documentName, onClose, onDelete }: Prop
       },
     } as IEditMessage;
     sendJsonMessage(message);
-    setCurrentContent(e.target.value);
+    setCurrentContent(newContent);
   };
 
   return (

@@ -1,4 +1,4 @@
-import { ICollaborativeFile } from './CollaborativeFile';
+import { ICollaborativeFile } from './CollaborativeDocument';
 import { IMessage } from './Message';
 import { IUser } from './User';
 
@@ -27,13 +27,13 @@ type IChannelOperations = 'channel_sync' | 'channel_created' | 'channel_deleted'
 
 export type IChannelOperationEvents =
   | {
-      type: Omit<IChannelOperations, 'channel_sync'>;
-      content: IChannel;
-    }
+    type: Omit<IChannelOperations, 'channel_sync'>;
+    content: IChannel;
+  }
   | {
-      type: Extract<IChannelOperations, 'channel_sync'>;
-      content: IChannel[];
-    };
+    type: Extract<IChannelOperations, 'channel_sync'>;
+    content: IChannel[];
+  };
 
 export interface IChannelContext {
   channels: IChannel[];
