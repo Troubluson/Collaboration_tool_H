@@ -3,7 +3,6 @@ import type { MenuProps } from 'antd';
 import {
   Button,
   Flex,
-  Form,
   Input,
   Layout,
   Menu,
@@ -156,7 +155,7 @@ const SideBar = () => {
         style={{
           position: 'absolute',
           bottom: '5rem',
-          paddingLeft: '2rem',
+          paddingInline: '1.5rem',
           width: '100%',
           display: 'flex',
         }}
@@ -166,10 +165,11 @@ const SideBar = () => {
             <Typography
               style={{
                 color: 'whitesmoke',
-                fontSize: '14px',
+                fontSize: '12px',
                 fontWeight: 'bold',
                 textAlign: 'center',
                 marginRight: '1rem',
+                textWrap: 'nowrap',
               }}
             >
               Throughput
