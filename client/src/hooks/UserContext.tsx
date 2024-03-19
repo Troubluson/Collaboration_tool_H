@@ -6,6 +6,7 @@ import { BASE_URL, WS_BASE_URL } from '../config';
 import { reportLatency } from '../components/Diagnostics/Measurement';
 import throughput_test from '../throughput_test.mp4';
 import { message } from 'antd';
+import apiClient from '../api/apiClient';
 
 export const UserContext = createContext<IUserContext>({
   user: null,
@@ -53,18 +54,14 @@ export const UserProvider = ({ children }: Props) => {
       formData.append('file', blob);
       formData.append('start_time', String(new Date().getTime()));
       formData.append('size', String(blob.size));
-      const res = await fetch(`${BASE_URL}/throughput`, {
-        method: 'POST',
-        body: formData,
-      });
+
+      const { data, headers } = await apiClient.postForm('/throughput', formData);
 
       const end = new Date();
-      const form = await res.formData();
 
-      const upload = Number(Number(form.get('upload_throughput')).toFixed(2));
-
-      const start = new Date(form.get('start_time') as string);
-      const size = Number(form.get('size'));
+      const size = Number(headers['content-length']);
+      const upload = Number(Number(data.upload_throughput).toFixed(2));
+      const start = new Date(data.start_time);
       const ms = Number(end) - Number(start);
       const seconds = ms / 1000;
       const MB = size / 1000000;
