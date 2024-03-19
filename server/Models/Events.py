@@ -17,7 +17,7 @@ class SyncData(BaseModel):
     content: str 
 
 class SyncEvent(BaseModel):
-    event: Optional[str] = "document"
+    event: Optional[str] = "sync_document"
     data: SyncData
 
 class ErrorData(BaseModel):
@@ -27,13 +27,8 @@ class ErrorEvent(BaseModel):
     data: ErrorData
 
 class OperationEvent(BaseModel):
-    userId: str
-    type: str
-    index: int
-    text: str
+    operation: IOperation
     revision: int
-    def to_op(self) -> IOperation:
-        return IOperation.model_construct(self)
 
 
 

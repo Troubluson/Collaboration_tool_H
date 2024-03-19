@@ -1,4 +1,4 @@
-import { ICollaborativeFile } from './CollaborativeDocument';
+import { ICollaborativeDocument } from './CollaborativeDocument';
 import { IMessage } from './Message';
 import { IUser } from './User';
 
@@ -20,7 +20,7 @@ type IChannelEvents =
 
 export interface IChannelEvent {
   type: IChannelEvents;
-  content: IChannel | IUser | IMessage | ICollaborativeFile;
+  content: IChannel | IUser | IMessage | ICollaborativeDocument;
 }
 
 type IChannelOperations = 'channel_sync' | 'channel_created' | 'channel_deleted';
