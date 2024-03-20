@@ -47,21 +47,22 @@ export const UserProvider = ({ children }: Props) => {
 
   const measureThroughput = async () => {
     try {
-      const file = await fetch(throughput_test);
+      const download_start = new Date();
+      const file = await fetch(throughput_test + `?cache=${new Date()}`, {
+        cache: 'no-cache',
+      });
+      const download_end = new Date();
+      const size = Number(file.headers.get('content-length'));
       const blob = await file.blob();
 
       const formData = new FormData();
       formData.append('file', blob);
       formData.append('start_time', String(new Date().getTime()));
 
-      const { data, headers } = await apiClient.postForm('/throughput', formData);
+      const { data } = await apiClient.postForm('/throughput', formData);
 
-      const end = new Date();
-
-      const size = Number(headers['content-length']);
       const upload = Number(Number(data.upload_throughput).toFixed(2));
-      const start = Number(data.start_time);
-      const ms = end.getTime() - start;
+      const ms = download_end.getTime() - download_start.getTime();
       const seconds = ms / 1000;
       const MB = size / 1000000;
       const download = Number((MB / seconds).toFixed(2));
