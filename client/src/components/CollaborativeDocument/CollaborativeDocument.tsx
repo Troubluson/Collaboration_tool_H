@@ -43,7 +43,7 @@ const CollaborativeDocument = ({
     `${WS_BASE_URL}${path}`,
     {
       onOpen: () => console.log('websocket opened'),
-      shouldReconnect: (closeEvent) => false,
+      shouldReconnect: (closeEvent) => true,
     },
   );
 
@@ -111,7 +111,6 @@ const CollaborativeDocument = ({
       }
       const newCursorPos = Math.max(cursorPos, 0);
       if (text !== currentContent) {
-        console.log(newCursorPos);
         setCursorPosition(newCursorPos);
         setCurrentContent(text);
         setForceUpdate(true);

@@ -34,7 +34,7 @@ export const UserProvider = ({ children }: Props) => {
 
   const { sendJsonMessage, readyState } = useWebSocket(`${WS_BASE_URL}/latency`, {
     onOpen: () => console.log('websocket opened'),
-    shouldReconnect: () => false,
+    shouldReconnect: () => true,
     onMessage: ({ data }) => {
       const end_time = new Date();
       if (!user) return;
