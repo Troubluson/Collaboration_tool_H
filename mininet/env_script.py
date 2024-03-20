@@ -41,8 +41,8 @@ class NetworkTopo(Topo):
         left_h2 = self.addHost(name='h2', ip=host_IPs[2], defaultRoute='via 10.0.0.1')
         right_h3 = self.addHost(name='h3', ip=host_IPs[3], defaultRoute='via 10.0.1.1')
 
-
-        self.addLink(left_h0,left_s0)
+        # Add links and make h0 s0 connection slow artificially (affects also socks proxy but lets test this)
+        self.addLink(left_h0,left_s0, cls=TCLink, delay='100ms', bw=1)
         self.addLink(left_h1,left_s0)
         self.addLink(left_h2,left_s0)
         self.addLink(right_h3,right_s1)
