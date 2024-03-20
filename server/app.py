@@ -251,14 +251,11 @@ async def get_test(websocket: WebSocket):
         manager.disconnect(websocket)
         await manager.send_message("Bye!!!", websocket)
 
-# Gets channel id and returns all user measurements. Not tested
-@app.get("/channel/{channel_id}/latency")
-async def get_channel_test_info(channel_id) -> List[IMeasurement]:    
-    channel = findFromList(channels, 'id', channel_id)
-    if not channel:
-        raise EntityDoesNotExist("channel")
-    users_in_channel = [user.id for user in channel.users]
-    latencies: List[IMeasurement] = [IMeasurement(user_id=user_id, latency=latency) for [user_id, latency] in user_to_latency.items() if user_id in users_in_channel]
+# Return the latency of a specific user
+@app.get("/users/{user_id}/latency")
+async def get_channel_test_info(user_id: str) -> IMeasurement:    
+    user = findFromList(users, 'id', user_id)
+    if not user:
+        raise EntityDoesNotExist("user")
 
-    return latencies
-
+    return IMeasurement(user_id=user_id, latency=user_to_latency[user.id] if user.id in user_to_latency else None)

@@ -1,7 +1,6 @@
 export interface IUser {
   id: string;
   username: string;
-  latency?: number;
   isActive: boolean; // Can also be status: "active|inactive|offline if needed"
 }
 
