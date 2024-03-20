@@ -56,4 +56,4 @@ class IWebSocketMessage(BaseModel):
 
 class IMeasurement(BaseModel):
     user_id: str
-    latency: float
+    latency: float | None

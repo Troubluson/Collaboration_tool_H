@@ -75,6 +75,11 @@ export const UserProvider = ({ children }: Props) => {
 
   useEffect(() => {
     if (!user || !readyState) return;
+    // Send initial ping
+    sendJsonMessage({
+      event: 'ping',
+      data: { start_time: new Date() },
+    });
     //Ping every 15s
     setInterval(
       () =>
