@@ -7,7 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import app
 
 origins = [
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "http://10.0.1.2:3000"
 ]
 
 app.add_middleware(
@@ -21,6 +22,6 @@ app.add_middleware(
 app.mount("/", StaticFiles(directory="static/", html=True), name="static")
 
 config = Config()
-#config.bind = ["0.0.0.0:8080"]
+config.bind = ["10.0.1.2:8080"]
 
 asyncio.run(serve(app, config))
