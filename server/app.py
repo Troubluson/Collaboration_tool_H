@@ -99,7 +99,7 @@ async def send_file(senderId: str = Form(...), channelId: str = Form(...), file:
         "id": str(uuid4()),
         "content": file.filename,
         "file": fileId,
-        "sender": user.id,
+        "sender": user,
         "channelId": channel.id
     }
     event = IChannelEvent(type="new_message", content=message)
