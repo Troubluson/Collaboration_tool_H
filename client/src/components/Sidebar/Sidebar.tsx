@@ -16,12 +16,7 @@ import React, { useEffect, useState } from 'react';
 import { Logo } from '../Logo/Logo';
 import { useChannel } from '../../hooks/ChannelContext';
 import { useUser } from '../../hooks/UserContext';
-import {
-  CreateChannelRequest,
-  IChannel,
-  IChannelOperationEvents,
-} from '../../@types/Channel';
-import apiClient from '../../api/apiClient';
+import { IChannel, IChannelOperationEvents } from '../../@types/Channel';
 import { BASE_URL } from '../../config';
 
 const { Sider } = Layout;
@@ -48,6 +43,7 @@ const SideBar = () => {
   const {
     joinedChannels,
     availableChannels,
+    currentChannel,
     setChannels,
     setCurrentChannel,
     joinExistingChannel,
@@ -55,12 +51,14 @@ const SideBar = () => {
     channelCreated,
     channelDeleted,
   } = useChannel();
-  const { user, logout, measureThroughput, downloadThroughput, uploadThroughput } = useUser();
+  const { user, logout, measureThroughput, downloadThroughput, uploadThroughput } =
+    useUser();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState('');
   const [channelOpsEvent, setChannelOpsEvent] = useState<IChannelOperationEvents | null>(
     null,
   );
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
 
   const items: MenuProps['items'] = [
     getItem(
@@ -79,11 +77,12 @@ const SideBar = () => {
   ];
 
   // WIP
-  const onItemSelect: MenuProps['onSelect'] = ({ key }) => {
+  const onItemSelect: MenuProps['onSelect'] = ({ key, selectedKeys }) => {
     if (key === 'C') {
       setIsModalOpen(true);
       return;
     }
+    setSelectedKeys(selectedKeys);
     const availableChannelIndex = availableChannels
       .map((channel) => channel.id)
       .indexOf(key);
@@ -102,6 +101,11 @@ const SideBar = () => {
       return;
     }
     createChannel(name);
+    setIsModalOpen(false);
+    setName('');
+  };
+
+  const closeModal = () => {
     setIsModalOpen(false);
     setName('');
   };
@@ -148,6 +152,15 @@ const SideBar = () => {
     };
   }, [user?.id]);
 
+  // Prevent menu item not being selectable despite not active
+  useEffect(() => {
+    if (currentChannel?.id) {
+      setSelectedKeys([currentChannel.id]);
+    } else {
+      setSelectedKeys([]);
+    }
+  }, [currentChannel]);
+
   return (
     <Sider
       style={{
@@ -169,6 +182,7 @@ const SideBar = () => {
         defaultOpenKeys={['A', 'B']}
         onSelect={onItemSelect}
         items={items}
+        selectedKeys={selectedKeys}
       />
       <div
         style={{
@@ -272,7 +286,7 @@ const SideBar = () => {
         open={isModalOpen}
         okButtonProps={{ disabled: !name }}
         onOk={onChannelCreate}
-        onCancel={() => setIsModalOpen(false)}
+        onCancel={closeModal}
       >
         <Input
           placeholder="Channel Name"
