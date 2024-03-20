@@ -1,7 +1,7 @@
 import asyncio
 import copy
 import time
-from typing import List
+from typing import List, Optional
 from fastapi import FastAPI, File, Form, Request, Response, UploadFile, WebSocket, WebSocketDisconnect
 
 from fastapi.responses import FileResponse
@@ -235,7 +235,9 @@ async def receive_data(user_id: str, body: LatencyRequest):
 manager = WebSocketConnectionManager()
 # Made to enable latency testing. Not tested
 @app.websocket("/latency/{user_id}")
-async def get_test(user_id: str, websocket: WebSocket):
+async def get_test(websocket: WebSocket, user_id: Optional[str] = None):
+    if not user_id:
+        return
     await manager.connect(websocket)
     try:
         toggleUserStatus(user_id, True)       
