@@ -68,7 +68,9 @@ async def event_stream(req: Request, channel_id: str, user_id: str):
                 await asyncio.sleep(0.1)
         except asyncio.CancelledError as e:
           print(f"Disconnected from client (via refresh/close) {req.client}")
+          user_in_channel_index = channel.users.index(user)
           user.isActive = False
+          channel.users[user_in_channel_index] = user 
           channel.events.append(IChannelEvent(type="user_status_change", content=user))
           raise e
     return EventSourceResponse(event_publisher())
