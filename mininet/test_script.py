@@ -90,7 +90,7 @@ class TestMyWebApp:
 
 # set up Firefox options
 options = Options()
-#options.add_argument('-headless')  # use this line to set headless mode
+options.add_argument('-headless')  # use this line to set headless mode
 
 # set up Firefox service
 service = Service(executable_path='/home/qtio/Downloads/apps/geckodrivers/geckodriver')

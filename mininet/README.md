@@ -9,6 +9,10 @@ sudo service openvswitch-switch start
 or
 sudo systemctl start ovs-vswitchd.service
 
+Selenium installation
+
+pip3 install selenium
+
 ## Possibly needed modifications
 
 Create a symlink to use openflow controller.
