@@ -16,7 +16,7 @@ from Routers.CollaborativeDocument import collaborate_router
 from Models.Requests import CreateChannelRequest, LatencyRequest
 from Models.Exceptions import AlreadyExists, BadParameters, EntityDoesNotExist, InvalidSender
 from Models.Entities import IChannelEvent, IMeasurement, IMessage, IWebSocketMessage
-from utils.helpers import findFromList
+from utils.helpers import findFromList, toggleUserStatus
 from datetime import datetime
 import base64
 
@@ -68,10 +68,6 @@ async def event_stream(req: Request, channel_id: str, user_id: str):
                 await asyncio.sleep(0.1)
         except asyncio.CancelledError as e:
           print(f"Disconnected from client (via refresh/close) {req.client}")
-          user_in_channel_index = channel.users.index(user)
-          user.isActive = False
-          channel.users[user_in_channel_index] = user 
-          channel.events.append(IChannelEvent(type="user_status_change", content=user))
           raise e
     return EventSourceResponse(event_publisher())
 
@@ -238,10 +234,11 @@ async def receive_data(user_id: str, body: LatencyRequest):
 
 manager = WebSocketConnectionManager()
 # Made to enable latency testing. Not tested
-@app.websocket("/latency")
-async def get_test(websocket: WebSocket):
+@app.websocket("/latency/{user_id}")
+async def get_test(user_id: str, websocket: WebSocket):
     await manager.connect(websocket)
     try:
+        toggleUserStatus(user_id, True)       
         while True:
             message: IWebSocketMessage = await websocket.receive_json()
             match message["event"]:
@@ -250,6 +247,7 @@ async def get_test(websocket: WebSocket):
                 case _:
                     print("Noop")
     except WebSocketDisconnect:
+        toggleUserStatus(user_id, False)       
         manager.disconnect(websocket)
         await manager.send_message("Bye!!!", websocket)
 

@@ -32,18 +32,21 @@ export const UserProvider = ({ children }: Props) => {
     setUser(null);
   };
 
-  const { sendJsonMessage, readyState } = useWebSocket(`${WS_BASE_URL}/latency`, {
-    onOpen: () => console.log('websocket opened'),
-    shouldReconnect: () => true,
-    onMessage: ({ data }) => {
-      const end_time = new Date();
-      if (!user) return;
-      const message = JSON.parse(data);
-      const start_time = new Date(message.data.start_time);
-      const latency = Number(end_time) - Number(new Date(start_time));
-      reportLatency(user.id, latency);
+  const { sendJsonMessage, readyState } = useWebSocket(
+    `${WS_BASE_URL}/latency/${user?.id ?? ''}`,
+    {
+      onOpen: () => console.log('websocket opened'),
+      shouldReconnect: () => true,
+      onMessage: ({ data }) => {
+        const end_time = new Date();
+        if (!user) return;
+        const message = JSON.parse(data);
+        const start_time = new Date(message.data.start_time);
+        const latency = Number(end_time) - Number(new Date(start_time));
+        reportLatency(user.id, latency);
+      },
     },
-  });
+  );
 
   const measureThroughput = async () => {
     try {
