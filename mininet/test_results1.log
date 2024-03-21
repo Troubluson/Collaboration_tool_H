@@ -1,0 +1,20 @@
+2024-03-21 22:19:10,289 - selenium_tests - INFO - Tried to login with user user_0
+2024-03-21 22:19:11,560 - selenium_tests - INFO - Tried to login with user user_1
+2024-03-21 22:19:12,564 - selenium_tests - INFO - Successfully logged in as user user_2
+2024-03-21 22:19:12,565 - selenium_tests - INFO - Starting chat testing
+2024-03-21 22:20:47,978 - selenium_tests - INFO - Chat test successful
+2024-03-21 22:20:50,835 - selenium_tests - INFO - Successfully created a channel named h1_channel_0
+2024-03-21 22:20:51,232 - selenium_tests - INFO - Successfully read user statuses in channel testing_channel
+2024-03-21 22:20:51,232 - selenium_tests - INFO - Users are ['user_0', 'user_1 (You)', 'supervisor', 'user_3']
+2024-03-21 22:20:51,644 - selenium_tests - INFO - Successfully sent messages to channel h1_channel_0
+2024-03-21 22:20:54,876 - selenium_tests - INFO - Upload speed: 10.37 MB/s
+2024-03-21 22:20:54,876 - selenium_tests - INFO - Download speed: 13.39 MB/s
+2024-03-21 22:20:58,101 - selenium_tests - INFO - Upload speed: 90.43 MB/s
+2024-03-21 22:20:58,101 - selenium_tests - INFO - Download speed: 254.48 MB/s
+2024-03-21 22:21:01,325 - selenium_tests - INFO - Upload speed: 93.35 MB/s
+2024-03-21 22:21:01,325 - selenium_tests - INFO - Download speed: 101.79 MB/s
+2024-03-21 22:21:01,325 - selenium_tests - INFO - Successfully tested speed measurement
+2024-03-21 22:21:01,605 - selenium_tests - INFO - Successfully uploaded file to channel h1_channel_0
+2024-03-21 22:21:01,612 - selenium_tests - INFO - Successfully large file to channel h1_channel_0
+2024-03-21 22:21:01,897 - selenium_tests - INFO - User logged out
+2024-03-21 22:21:02,294 - selenium_tests - INFO - Test ended
